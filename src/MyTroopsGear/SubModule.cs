@@ -21,6 +21,9 @@ namespace MyTroopsGear
             try
             {
                 // The Encyclopedia unit page's "Edit gear" button (UI\EncyclopediaUnitPageButtons.cs).
+                // Never give a [ViewModelMixin] a refresh method name: UIExtenderEx would Harmony-patch (= JIT) that game
+                // method here, before GameTexts exists, and a static constructor it triggers (CampaignUIHelper) then
+                // fails for the whole run - the campaign map crashed on load (2026-11-03). tools\check-gui.ps1 checks it.
                 _uiExtender = UIExtender.Create("MyTroopsGear");
                 _uiExtender.Register(typeof(SubModule).Assembly);
                 _uiExtender.Enable();
@@ -50,10 +53,20 @@ namespace MyTroopsGear
             try
             {
                 UI.EncyclopediaBackGuard.Apply(new Harmony(HarmonyId));
+                ModLog.Info("load", "encyclopedia back guard applied");
             }
             catch (Exception e)
             {
                 ModLog.Error("load", "patching the Encyclopedia's Back/Forward failed (Backspace in the editor may page it back)", e);
+            }
+            try
+            {
+                UI.EncyclopediaRefreshPatch.Apply(new Harmony(HarmonyId));
+                ModLog.Info("load", "encyclopedia unit page refresh patch applied");
+            }
+            catch (Exception e)
+            {
+                ModLog.Error("load", "patching the Encyclopedia unit page refresh failed (My version may fall back to vanilla after a language change)", e);
             }
             try
             {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Bannerlord.UIExtenderEx.Attributes;
 using Bannerlord.UIExtenderEx.Prefabs2;
@@ -55,11 +55,25 @@ namespace MyTroopsGear.UI
 </ListPanel>";
     }
 
-    // "RefreshValues": the vanilla RefreshValues rebuilds the set selector from the troop's own sets (language change
-    // etc.); OnRefresh puts My version back after it.
-    [ViewModelMixin("RefreshValues")]
+    // NO refresh method name in [ViewModelMixin]: UIExtenderEx would Harmony-patch EncyclopediaUnitPageVM.RefreshValues
+    // in OnSubModuleLoad, which JIT-compiles it at the main menu; it reads CampaignUIHelper.SkillObjectComparerInstance,
+    // so the JIT runs CampaignUIHelper's static constructor before GameTexts exists -> NullReferenceException inside it,
+    // the type is poisoned for the whole run, and the campaign map crashes on load (2026-11-03). The vanilla
+    // RefreshValues (language change etc.) is followed instead by RefreshValuesPatch, applied in OnGameStart.
+    [ViewModelMixin]
     public sealed class EncyclopediaUnitPageMixin : BaseViewModelMixin<EncyclopediaUnitPageVM>
     {
+        /// <summary>Live mixins by page VM, for RefreshValuesPatch (weak: pages the Encyclopedia drops are not kept).</summary>
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EncyclopediaUnitPageVM, EncyclopediaUnitPageMixin> ByPage =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<EncyclopediaUnitPageVM, EncyclopediaUnitPageMixin>();
+
+        /// <summary>Postfix target: the vanilla RefreshValues just rebuilt the page's sets; put My version back.</summary>
+        internal static void AfterVanillaRefresh(EncyclopediaUnitPageVM vm)
+        {
+            if (vm != null && ByPage.TryGetValue(vm, out var mixin))
+                mixin.OnRefresh();
+        }
+
         private static readonly AccessTools.FieldRef<EncyclopediaUnitPageVM, CharacterObject>? CharacterField = TryField();
 
         private static readonly AccessTools.FieldRef<SelectorVM<EncyclopediaUnitEquipmentSetSelectorItemVM>, Action<SelectorVM<EncyclopediaUnitEquipmentSetSelectorItemVM>>>?
@@ -83,6 +97,15 @@ namespace MyTroopsGear.UI
             catch (Exception e)
             {
                 ModLog.ErrorOnce("encyclopedia troop", e);
+            }
+            try
+            {
+                ByPage.Remove(vm);
+                ByPage.Add(vm, this);
+            }
+            catch (Exception e)
+            {
+                ModLog.ErrorOnce("encyclopedia page table", e);
             }
             ApplyView(force: false);
         }
@@ -269,6 +292,33 @@ namespace MyTroopsGear.UI
             {
                 ModLog.Error("load", "SelectorVM._onChange not found - the unit page stays vanilla", e);
                 return null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Postfix on EncyclopediaUnitPageVM.RefreshValues (language change etc. rebuilds the set selector from the troop's
+    /// own sets): puts My version back. Must be applied once a Game exists (OnGameStart, GameTexts loaded) - see the
+    /// note on EncyclopediaUnitPageMixin for why it is not done by UIExtenderEx at module load.
+    /// </summary>
+    internal static class EncyclopediaRefreshPatch
+    {
+        public static void Apply(Harmony harmony)
+        {
+            var target = AccessTools.Method(typeof(EncyclopediaUnitPageVM), nameof(EncyclopediaUnitPageVM.RefreshValues), Type.EmptyTypes)
+                         ?? throw new MissingMethodException("EncyclopediaUnitPageVM.RefreshValues not found");
+            harmony.Patch(target, postfix: new HarmonyMethod(typeof(EncyclopediaRefreshPatch), nameof(Postfix)));
+        }
+
+        private static void Postfix(EncyclopediaUnitPageVM __instance)
+        {
+            try
+            {
+                EncyclopediaUnitPageMixin.AfterVanillaRefresh(__instance);
+            }
+            catch (Exception e)
+            {
+                ModLog.ErrorOnce("unit page refresh", e);
             }
         }
     }
