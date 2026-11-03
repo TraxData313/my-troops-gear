@@ -100,7 +100,18 @@
                             </Widget>
                             <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="268" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="12" StackLayout.LayoutMethod="VerticalTopToBottom">
                               <Children>
-                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#D9CBB4FF" Text="@SlotText" />
+                                <!-- slot label, and the shown item's tier and value on the right -->
+                                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22">
+                                  <Children>
+                                    <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#D9CBB4FF" Text="@SlotText" />
+                                    <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Right" StackLayout.LayoutMethod="HorizontalLeftToRight" IsVisible="@HasItem">
+                                      <Children>
+                                        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Right" Brush.TextVerticalAlignment="Center" Brush.FontColor="#B5AB9AFF" Text="@PriceText" />
+                                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="16" SuggestedHeight="16" VerticalAlignment="Center" MarginLeft="4" Sprite="General\Icons\Coin@2x" />
+                                      </Children>
+                                    </ListPanel>
+                                  </Children>
+                                </Widget>
                                 <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" Brush="Popup.Description.Text" Brush.FontSize="18" Brush.TextHorizontalAlignment="Left" Brush.FontColor="@ItemColor" Text="@ItemText" />
                               </Children>
                             </ListPanel>
@@ -248,7 +259,12 @@
                                               </Children>
                                             </Widget>
                                             <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="44" VerticalAlignment="Top" MarginTop="86" MarginLeft="6" MarginRight="6" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Top" Brush.FontColor="#F4E9D6FF" Text="@NameText" IsHidden="@IsEmptyChoice" DoNotAcceptEvents="true" />
-                                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="20" VerticalAlignment="Bottom" MarginBottom="6" MarginLeft="6" MarginRight="6" Brush="Popup.Description.Text" Brush.FontSize="13" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@DetailText" DoNotAcceptEvents="true" />
+                                            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="20" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="6" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                                              <Children>
+                                                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="13" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@DetailText" DoNotAcceptEvents="true" />
+                                                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="14" SuggestedHeight="14" VerticalAlignment="Center" MarginLeft="4" Sprite="General\Icons\Coin@2x" IsVisible="@HasPrice" DoNotAcceptEvents="true" />
+                                              </Children>
+                                            </ListPanel>
                                           </Children>
                                         </ButtonWidget>
                                       </Children>

@@ -116,6 +116,7 @@ namespace MyTroopsGear.UI
         private bool _isOverridden;
         private bool _isSelected;
         private bool _hasItem;
+        private string _priceText = "";
         private ItemImageIdentifierVM _visual = new ItemImageIdentifierVM(null);
 
         public GearSlotVM(GearEditorVM owner, int slot)
@@ -176,6 +177,14 @@ namespace MyTroopsGear.UI
             set { if (value != _isSelected) { _isSelected = value; OnPropertyChangedWithValue(value, nameof(IsSelected)); } }
         }
 
+        /// <summary>"Tier 3 | 1,250" of the shown item (ours or the vanilla one); empty for an empty slot.</summary>
+        [DataSourceProperty]
+        public string PriceText
+        {
+            get => _priceText;
+            set { if (value != _priceText) { _priceText = value; OnPropertyChangedWithValue(value, nameof(PriceText)); } }
+        }
+
         [DataSourceProperty]
         public bool HasItem
         {
@@ -192,9 +201,9 @@ namespace MyTroopsGear.UI
 
         public ItemObject? Item => _item;
 
-        /// <summary><paramref name="overridden"/>: our item (null = emptied); otherwise <paramref name="item"/> is the
-        /// vanilla set's.</summary>
-        public void Show(ItemObject? item, bool overridden)
+        /// <summary><paramref name="edited"/>: the player's item (null = emptied), gold with Reset. Otherwise grey
+        /// "vanilla: X": the shown vanilla set's item, or a block mate stored unchanged with an edited weapon/mount.</summary>
+        public void Show(ItemObject? item, bool edited)
         {
             if (item != _item || Visual == null)
             {
@@ -202,11 +211,12 @@ namespace MyTroopsGear.UI
                 Visual = new ItemImageIdentifierVM(item);
             }
             HasItem = item != null;
-            IsOverridden = overridden;
+            PriceText = item == null ? "" : GearEditing.TierPriceText(ItemCandidates.TierFromGame((int)item.Tier), item.Value);
+            IsOverridden = edited;
             var name = item?.Name?.ToString() ?? "(empty)";
-            ItemText = overridden ? name : "vanilla: " + name;
-            ItemColor = overridden ? EditorColors.Edited : EditorColors.Vanilla;
-            StatusText = overridden ? "yours" : "";
+            ItemText = edited ? name : "vanilla: " + name;
+            ItemColor = edited ? EditorColors.Edited : EditorColors.Vanilla;
+            StatusText = edited ? "yours" : "";
         }
 
         public void ExecuteChange() => _owner.OpenPicker(Slot);
@@ -231,6 +241,7 @@ namespace MyTroopsGear.UI
             NameText = name;
             DetailText = detail;
             IsEmptyChoice = item == null;
+            HasPrice = item != null;
             Visual = new ItemImageIdentifierVM(item);
         }
 
@@ -241,6 +252,8 @@ namespace MyTroopsGear.UI
         [DataSourceProperty] public string DetailText { get; }
 
         [DataSourceProperty] public bool IsEmptyChoice { get; }
+
+        [DataSourceProperty] public bool HasPrice { get; }
 
         [DataSourceProperty] public ItemImageIdentifierVM Visual { get; }
 

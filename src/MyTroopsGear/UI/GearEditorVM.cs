@@ -246,7 +246,7 @@ namespace MyTroopsGear.UI
             var id = item?.StringId ?? GearSlots.Empty;
             Edit("set " + GearSlots.Name(slot) + "=" + id, store =>
             {
-                store.Set(_troop.StringId, slot, id, VanillaId);
+                GearEditing.SetSlot(store, _troop.StringId, slot, id, VanillaId);
                 return true;
             });
         }
@@ -310,9 +310,9 @@ namespace MyTroopsGear.UI
             foreach (var row in Slots)
             {
                 if (over != null && over.TryGet(row.Slot, out var id))
-                    row.Show(GearApplier.FindItem(id), overridden: true);
+                    row.Show(GearApplier.FindItem(id), GearEditing.IsSlotEdited(over, row.Slot, VanillaId));
                 else
-                    row.Show(vanilla[(EquipmentIndex)row.Slot].Item, overridden: false);
+                    row.Show(vanilla[(EquipmentIndex)row.Slot].Item, edited: false);
             }
             int edited = Slots.Count(r => r.IsOverridden);
             CanResetAll = over != null;
@@ -410,7 +410,7 @@ namespace MyTroopsGear.UI
                 {
                     var item = ItemCatalog.Item(c.Id);
                     if (item == null) continue;
-                    Cards.Add(new ItemCardVM(this, item, c.Name, "Tier " + c.Tier + " - " + ItemCatalog.SubTypeLabel(c.SubType)));
+                    Cards.Add(new ItemCardVM(this, item, c.Name, GearEditing.TierPriceText(c.Tier, item.Value)));
                 }
                 ResultText = found.Count == 0 ? "No item matches these filters."
                     : found.Count > MaxCards ? "Showing " + MaxCards + " of " + found.Count + " - narrow the filters or search."
