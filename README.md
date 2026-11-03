@@ -32,7 +32,8 @@ More pictures in [docs/screenshots](docs/screenshots).
 
 ## Install
 
-1. Get it from [Nexus Mods](https://www.nexusmods.com/mountandblade2bannerlord/mods/14474),
+1. Subscribe on the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3833213221),
+   get it from [Nexus Mods](https://www.nexusmods.com/mountandblade2bannerlord/mods/14474),
    or download the zip from the [GitHub Releases page](https://github.com/TraxData313/my-troops-gear/releases/latest).
 2. Extract it into `Mount & Blade II Bannerlord\Modules\`.
 3. Enable it in the launcher.

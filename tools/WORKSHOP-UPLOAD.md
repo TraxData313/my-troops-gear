@@ -3,7 +3,7 @@
 Same uploader and quirks as the sibling mods (see better-skirmisher-separation's `tools\WORKSHOP-UPLOAD.md`):
 Bannerlord's own `TaleWorlds.MountAndBlade.SteamWorkshop.exe`, riding the logged-in Steam client.
 
-Item: **not created yet.** (Account note: since 2026-10-10 new uploads from this account go hidden
+Item: **[3833213221](https://steamcommunity.com/sharedfiles/filedetails/?id=3833213221)**, created 2026-11-03. (Account note: since 2026-10-10 new uploads from this account go hidden
 "awaiting approval" - see `MODS-STATUS.md`, "The Steam block".)
 
 ## First upload (creates the item - once only)

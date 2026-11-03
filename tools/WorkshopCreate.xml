@@ -1,7 +1,7 @@
 <Tasks>
     <CreateItem/>
     <UpdateItem>
-        <!-- First Steam Workshop upload: it CREATES the item. Run it ONCE (tools\WORKSHOP-UPLOAD.md), then put the
+        <!-- ALREADY RUN 2026-11-03 (item 3833213221) - NEVER RUN AGAIN. First Steam Workshop upload: it CREATES the item. Run it ONCE (tools\WORKSHOP-UPLOAD.md), then put the
              new item ID into WorkshopUpdate.xml and never run this file again. <Tasks> must be the file's
              first node; comments only inside UpdateItem. Title comes from SubModule.xml <Name>.
              The short description here is replaced by tools\STEAM-DESCRIPTION.bbcode on the first update. -->
