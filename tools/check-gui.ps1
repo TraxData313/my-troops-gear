@@ -48,7 +48,10 @@ $rootViewModels = @{
 $brushModules = @("Native", "SandBoxCore", "SandBox")
 
 # ── assemblies ───────────────────────────────────────────────────────────────────────────────────────────────
-$searchDirs = @($outDir, $gameBin,
+# UIExtenderEx: our prefab extension and mixin types derive from its classes.
+$uiExtenderBin = "$(& dotnet msbuild $moduleProject -nologo -getProperty:UIExtenderExBinFolder)".Trim()
+$harmonyBin = "$(& dotnet msbuild $moduleProject -nologo -getProperty:HarmonyBinFolder)".Trim()
+$searchDirs = @($outDir, $gameBin, $uiExtenderBin, $harmonyBin,
     (Join-Path $GameFolder "Modules\Native\bin\Win64_Shipping_Client"),
     (Join-Path $GameFolder "Modules\SandBoxCore\bin\Win64_Shipping_Client"),
     (Join-Path $GameFolder "Modules\SandBox\bin\Win64_Shipping_Client"))
@@ -229,8 +232,30 @@ function Test-LiteralValue([Type]$type, [string]$value, [string]$where) {
     }
 }
 
+# Vanilla view model full name -> our [ViewModelMixin] types on it: inside a prefab extension, a binding may name a
+# property or command of the vanilla view model or of a mixin (UIExtenderEx merges them).
+$mixinsFor = @{}
+
 function Get-VmMember([Type]$vm, [string]$name) {
-    return $vm.GetProperty($name, [System.Reflection.BindingFlags]"Instance,Public")
+    $prop = $vm.GetProperty($name, [System.Reflection.BindingFlags]"Instance,Public")
+    if ($prop -eq $null -and $mixinsFor.ContainsKey($vm.FullName)) {
+        foreach ($m in $mixinsFor[$vm.FullName]) {
+            $prop = $m.GetProperty($name, [System.Reflection.BindingFlags]"Instance,Public,DeclaredOnly")
+            if ($prop -ne $null) { break }
+        }
+    }
+    return $prop
+}
+
+function Get-VmMethod([Type]$vm, [string]$name) {
+    $method = $vm.GetMethod($name, [System.Reflection.BindingFlags]"Instance,Public")
+    if ($method -eq $null -and $mixinsFor.ContainsKey($vm.FullName)) {
+        foreach ($m in $mixinsFor[$vm.FullName]) {
+            $method = $m.GetMethod($name, [System.Reflection.BindingFlags]"Instance,Public,DeclaredOnly")
+            if ($method -ne $null) { break }
+        }
+    }
+    return $method
 }
 
 function Get-ItemType([Type]$listType) {
@@ -279,7 +304,7 @@ function Test-Element([System.Xml.XmlElement]$el, [Type]$vm, [string]$path) {
         if ($name -eq "DataSource" -or $name -eq "Id") { continue }
         if ($name.StartsWith("Command.")) {
             $script:bindingCount++
-            $method = $context.GetMethod($value, [System.Reflection.BindingFlags]"Instance,Public")
+            $method = Get-VmMethod $context $value
             if ($method -eq $null) { $problems.Add("$where : $name='$value' - no public method on $($context.Name)") }
             elseif ($method.GetParameters().Count -ne 0) { $problems.Add("$where : $name='$value' - command methods here take no parameters") }
             continue
@@ -330,7 +355,48 @@ foreach ($file in $files) {
     foreach ($root in $window.ChildNodes) { if ($root -is [System.Xml.XmlElement]) { Test-Element $root $vmType $file.BaseName } }
 }
 
-Write-Host "Checked $($files.Count) prefab(s) against $GameFolder ($($widgetTypes.Count) widget classes, $($brushes.Count) brushes)."
+# Prefab extensions ([PrefabExtension] types in our DLL, UIExtenderEx): their inline XML is checked the same way, against
+# the vanilla view model of that movie plus our mixins on it, and their XPath anchor must exist in the vanilla prefab.
+$extensionCount = 0
+foreach ($t in $ourTypes) {
+    $baseT = $t.BaseType
+    while ($baseT -ne $null) {
+        if ($baseT.IsGenericType -and $baseT.GetGenericTypeDefinition().Name -eq "BaseViewModelMixin``1") {
+            $target = $baseT.GetGenericArguments()[0].FullName
+            if (-not $mixinsFor.ContainsKey($target)) { $mixinsFor[$target] = New-Object System.Collections.Generic.List[Type] }
+            $mixinsFor[$target].Add($t)
+            break
+        }
+        $baseT = $baseT.BaseType
+    }
+}
+foreach ($t in $ourTypes) {
+    $attr = $t.GetCustomAttributes($false) | Where-Object { $_.GetType().Name -eq "PrefabExtensionAttribute" } | Select-Object -First 1
+    if ($attr -eq $null) { continue }
+    $extensionCount++
+    $movie = $attr.Movie
+    $where = "$($t.Name) ($movie)"
+    $vanillaFile = Get-ChildItem (Join-Path $GameFolder "Modules") -Recurse -Filter "$movie.xml" -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -like '*\GUI\Prefabs\*' } | Select-Object -First 1
+    if ($vanillaFile -eq $null) { $problems.Add("$where : no vanilla prefab $movie.xml"); continue }
+    $vanilla = New-Object System.Xml.XmlDocument
+    $vanilla.Load($vanillaFile.FullName)
+    if ($attr.XPath -and $vanilla.SelectNodes($attr.XPath).Count -eq 0) { $problems.Add("$where : XPath $($attr.XPath) matches nothing in $($vanillaFile.Name)") }
+    # The vanilla prefab's root view model: the one our mixins target (one mixin target per extended movie here).
+    $vmName = $null
+    foreach ($k in $mixinsFor.Keys) { if ($k.EndsWith("." + $movie + "VM")) { $vmName = $k } }
+    if ($vmName -eq $null) { $problems.Add("$where : no mixin on a ${movie}VM - cannot check its bindings"); continue }
+    $vmType = $mixinsFor[$vmName][0].BaseType.GetGenericArguments()[0]
+    $textProp = $t.GetProperties() | Where-Object { $_.GetCustomAttributes($false) | Where-Object { $_.GetType().Name -eq "PrefabExtensionTextAttribute" } } | Select-Object -First 1
+    if ($textProp -eq $null) { $problems.Add("$where : no [PrefabExtensionText] property (file-based extensions are not checked)"); continue }
+    $content = $textProp.GetValue([Activator]::CreateInstance($t))
+    $xml = New-Object System.Xml.XmlDocument
+    try { $xml.LoadXml($content) }
+    catch { $problems.Add("$where : not well-formed XML - $($_.Exception.Message)"); continue }
+    Test-Element $xml.DocumentElement $vmType $t.Name
+}
+
+Write-Host "Checked $($files.Count) prefab(s) and $extensionCount prefab extension(s) against $GameFolder ($($widgetTypes.Count) widget classes, $($brushes.Count) brushes)."
 Write-Host "Brushes used:"
 $usedBrushes.GetEnumerator() | Sort-Object Name | ForEach-Object { Write-Host ("  {0,-40} {1}" -f $_.Name, $_.Value) }
 Write-Host "Sprites used:"
