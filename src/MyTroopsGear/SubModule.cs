@@ -66,6 +66,15 @@ namespace MyTroopsGear
             }
             try
             {
+                UI.PartyScreenPatch.ApplySelected(new Harmony(HarmonyId));
+                ModLog.Info("load", "party screen selected-troop patch applied");
+            }
+            catch (Exception e)
+            {
+                ModLog.Error("load", "patching the party screen's big troop model failed (it stays vanilla)", e);
+            }
+            try
+            {
                 SpawnPatch.Apply(new Harmony(HarmonyId));
                 ModLog.Info("load", "spawn patch applied");
             }
