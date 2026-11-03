@@ -56,7 +56,7 @@ namespace MyTroopsGear
                     itemId = item.StringId;
                 }
 
-                store.Set(troop.StringId, slot, itemId, s => GearApplier.VanillaItemId(troop, s));
+                GearEditing.SetSlot(store, troop.StringId, slot, itemId, s => GearApplier.VanillaItemId(troop, s));
                 ModLog.Info("console", "set " + troop.StringId + " " + GearSlots.Name(slot) + " = " + itemId);
                 return "Set.\n" + ListOne(store, troop.StringId);
             }

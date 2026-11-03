@@ -87,25 +87,9 @@ namespace MyTroopsGear.Core
         /// <summary>At least one slot is really edited (the unit page's "*" and its Vanilla | My version toggle).</summary>
         public static bool HasEdits(TroopOverride? over, Func<int, string?> vanilla) => EditedSlotCount(over, vanilla) > 0;
 
-        /// <summary>
-        /// The grey text of a slot that is not edited. <paramref name="pinned"/>: the slot is stored with its block, so
-        /// every set now uses the first set's item. <paramref name="varies"/>: the troop's vanilla sets differ in this
-        /// slot, so the shown set's item is only one of the rolls.
-        /// </summary>
-        public static string VanillaText(string itemName, bool pinned, bool varies)
-        {
-            if (pinned && varies) return "vanilla (set 1): " + itemName;
-            if (varies) return "vanilla (varies): " + itemName;
-            return "vanilla: " + itemName;
-        }
-
         /// <summary>"Tier 3 | 1,250" - an item's tier (1-6) and value in denars, for rows and picker cards.</summary>
         public static string TierPriceText(int tier, int value) =>
             "Tier " + tier + " | " + value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-
-        /// <summary>The line under the set arrows: edits are an overlay on every vanilla set, not on the shown one.</summary>
-        public static string SetsText(int setCount) =>
-            setCount > 1 ? "Your edits apply to all " + setCount + " sets" : "This troop has one vanilla set";
 
         /// <summary>The troop goes fully vanilla. False if it had no override.</summary>
         public static bool ResetTroop(OverrideStore store, string troopId) => store.Clear(troopId);

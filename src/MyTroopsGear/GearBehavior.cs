@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MyTroopsGear.Core;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -57,6 +58,14 @@ namespace MyTroopsGear
                 var report = Store.Prune(TroopExists, ItemUsable);
                 foreach (var line in report)
                     ModLog.Info("load", line);
+                // A weapon block / mount pair left on all-vanilla items (older builds kept them) is dropped, so
+                // the troop rolls its vanilla sets again there.
+                foreach (var id in Store.TroopIds.ToList())
+                {
+                    var troop = MBObjectManager.Instance.GetObject<CharacterObject>(id);
+                    if (troop != null && GearEditing.DropVanillaBlocks(Store, id, s => GearApplier.VanillaItemId(troop, s)))
+                        ModLog.Info("load", id + ": dropped an unchanged weapon/mount block");
+                }
                 ModLog.Info("session", "campaign ready, " + Store.Count + " troop override(s)");
             }
             catch (Exception e)

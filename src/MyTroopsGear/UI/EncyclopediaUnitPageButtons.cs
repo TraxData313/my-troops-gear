@@ -146,7 +146,17 @@ namespace MyTroopsGear.UI
             "Show this troop as your parties field it: each vanilla set with your edited slots on top. "
             + "Remembered while you browse; troops you have not edited always show vanilla.");
 
-        private bool HasOverride => GearBehavior.Instance?.Store.HasOverride(_troop?.StringId) == true;
+        /// <summary>The troop has at least one really edited slot (a block mate stored unchanged does not count).</summary>
+        private bool HasOverride
+        {
+            get
+            {
+                var troop = _troop;
+                if (troop == null) return false;
+                var over = GearBehavior.Instance?.Store.Get(troop.StringId);
+                return GearEditing.HasEdits(over, s => GearApplier.VanillaItemId(troop, s));
+            }
+        }
 
         private bool CanShowMine => IsEditGearVisible && HasOverride;
 

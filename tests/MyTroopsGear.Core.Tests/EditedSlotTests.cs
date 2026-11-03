@@ -101,11 +101,6 @@ public class EditedSlotTests
     [Fact]
     public void Texts()
     {
-        Assert.Equal("vanilla: Spear", GearEditing.VanillaText("Spear", pinned: false, varies: false));
-        Assert.Equal("vanilla (varies): Spear", GearEditing.VanillaText("Spear", pinned: false, varies: true));
-        Assert.Equal("vanilla (set 1): Spear", GearEditing.VanillaText("Spear", pinned: true, varies: true));
         Assert.Equal("Tier 3 | 1,250", GearEditing.TierPriceText(3, 1250));
-        Assert.Equal("Your edits apply to all 4 sets", GearEditing.SetsText(4));
-        Assert.Equal("This troop has one vanilla set", GearEditing.SetsText(1));
     }
 }
