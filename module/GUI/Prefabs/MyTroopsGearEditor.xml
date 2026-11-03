@@ -1,0 +1,288 @@
+<!--
+  My Troops' Gear: the gear editor of one troop. Loaded by UI\GearEditorWindow via
+  GauntletLayer.LoadMovie("MyTroopsGearEditor", GearEditorVM) on layer order 320, over the Encyclopedia.
+  Our own layout (left: tableau + set arrows + reset whole unit; middle: one row per slot with Change / Reset;
+  right: the item picker). Only vanilla widget classes and brushes / sprites of always-loaded categories
+  (tools\check-gui.ps1 checks every tag, attribute, brush, sprite and binding against the game and the built DLL).
+-->
+<Prefab>
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+      <Children>
+
+        <!-- Dim the Encyclopedia behind; it also takes the clicks, so nothing below reacts -->
+        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.6" />
+
+        <!-- The window -->
+        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="1720" SuggestedHeight="950" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Children>
+
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#14100BFF" AlphaFactor="0.97" />
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="2" VerticalAlignment="Top" Sprite="BlankWhiteSquare_9" Color="#E4C59BFF" AlphaFactor="0.5" />
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="2" VerticalAlignment="Bottom" Sprite="BlankWhiteSquare_9" Color="#E4C59BFF" AlphaFactor="0.5" />
+
+            <!-- Title -->
+            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="44" VerticalAlignment="Top" MarginTop="14" MarginLeft="30" MarginRight="30" Brush="Popup.Title.Text" Text="@TitleText" />
+            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="28" VerticalAlignment="Top" MarginTop="58" MarginLeft="30" MarginRight="30" Brush="Popup.Description.Text" Brush.FontSize="18" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@SubtitleText" />
+
+            <!-- ===================== Left: the troop ===================== -->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="420" HorizontalAlignment="Left" MarginLeft="30" MarginTop="100" MarginBottom="90">
+              <Children>
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#FFFFFFFF" AlphaFactor="0.03" />
+
+                <!-- The tableau: the troop in the current vanilla set with our edits on top (a clone; the troop is untouched) -->
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="540" VerticalAlignment="Top" ClipContents="true" IsEnabled="false">
+                  <Children>
+                    <CharacterTableauWidget DataSource="{Character}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" BodyProperties="@BodyProperties" IsFemale="@IsFemale" EquipmentCode="@EquipmentCode" CharStringId="@CharStringId" StanceIndex="@StanceIndex" BannerCodeText="@BannerCodeText" MountCreationKey="@MountCreationKey" IsEnabled="false" ArmorColor1="@ArmorColor1" ArmorColor2="@ArmorColor2" Race="@Race" />
+                  </Children>
+                </Widget>
+
+                <!-- Vanilla set arrows: untouched slots show how they roll -->
+                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="548" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                  <Children>
+                    <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="44" SuggestedHeight="36" VerticalAlignment="Center" Brush="ButtonSimpleBrush" Command.Click="ExecutePreviousSet" IsEnabled="@HasManySets" UpdateChildrenStates="true">
+                      <Children>
+                        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="22" Text="&lt;" />
+                      </Children>
+                    </ButtonWidget>
+                    <TextWidget WidthSizePolicy="Fixed" SuggestedWidth="220" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="19" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#D9CBB4FF" Text="@SetText" />
+                    <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="44" SuggestedHeight="36" VerticalAlignment="Center" Brush="ButtonSimpleBrush" Command.Click="ExecuteNextSet" IsEnabled="@HasManySets" UpdateChildrenStates="true">
+                      <Children>
+                        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="22" Text="&gt;" />
+                      </Children>
+                    </ButtonWidget>
+                  </Children>
+                </ListPanel>
+
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" VerticalAlignment="Top" MarginTop="594" Brush="Popup.Description.Text" Brush.FontSize="17" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#F2D58CFF" Text="@EditedSummaryText" />
+
+                <!-- Reset the whole unit: big and plain, under the tableau. Two clicks (the text asks for the second). -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="380" SuggestedHeight="56" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="626">
+                  <Children>
+                    <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Cancel.Button" Command.Click="ExecuteResetAll" IsEnabled="@CanResetAll" UpdateChildrenStates="true">
+                      <Children>
+                        <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                          <Children>
+                            <BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="26" SuggestedHeight="26" VerticalAlignment="Center" MarginRight="10" Brush="RefreshButton.Flat" DoNotAcceptEvents="true" />
+                            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="21" Text="@ResetAllText" />
+                          </Children>
+                        </ListPanel>
+                      </Children>
+                    </ButtonWidget>
+                    <HintWidget DataSource="{ResetAllHint}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint" IsDisabled="true" />
+                  </Children>
+                </Widget>
+
+                <!-- Horse vs formation note -->
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Top" MarginTop="694" MarginLeft="14" MarginRight="14" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#E8A15AFF" Text="@WarningText" IsVisible="@HasWarning" />
+              </Children>
+            </Widget>
+
+            <!-- ===================== Middle: the slots ===================== -->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="620" HorizontalAlignment="Left" MarginLeft="470" MarginTop="100" MarginBottom="90">
+              <Children>
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Top" MarginLeft="8" Brush="Popup.Description.Text" Brush.FontSize="22" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#E4C59BFF" Text="@SlotsHeaderText" />
+                <ListPanel DataSource="{Slots}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Top" MarginTop="40" StackLayout.LayoutMethod="VerticalTopToBottom">
+                  <ItemTemplate>
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="64">
+                      <Children>
+                        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginBottom="2" Sprite="BlankWhiteSquare_9" Color="#FFFFFFFF" AlphaFactor="0.04" />
+                        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginBottom="2" Sprite="BlankWhiteSquare_9" Color="#B8893EFF" AlphaFactor="0.22" IsVisible="@IsSelected" />
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="4" MarginBottom="2" HorizontalAlignment="Left" Sprite="BlankWhiteSquare_9" Color="#F2D58CFF" AlphaFactor="0.9" IsVisible="@IsOverridden" />
+                        <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginBottom="2" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                          <Children>
+                            <!-- item picture (hover: the vanilla item tooltip) -->
+                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="52" VerticalAlignment="Center" MarginLeft="12" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint">
+                              <Children>
+                                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.35" DoNotAcceptEvents="true" />
+                                <ImageIdentifierWidget DataSource="{Visual}" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" AdditionalArgs="@AdditionalArgs" ImageId="@Id" TextureProviderName="@TextureProviderName" />
+                              </Children>
+                            </Widget>
+                            <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="268" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="12" StackLayout.LayoutMethod="VerticalTopToBottom">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#D9CBB4FF" Text="@SlotText" />
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" Brush="Popup.Description.Text" Brush.FontSize="18" Brush.TextHorizontalAlignment="Left" Brush.FontColor="@ItemColor" Text="@ItemText" />
+                              </Children>
+                            </ListPanel>
+                            <!-- Change -->
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="6" Brush="ButtonSimpleBrush" Command.Click="ExecuteChange" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="17" Text="@ChangeText" />
+                              </Children>
+                            </ButtonWidget>
+                            <!-- Reset this slot: shown only while the slot is yours; "vanilla" in its place otherwise -->
+                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="8">
+                              <Children>
+                                <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ButtonSimpleBrush" Command.Click="ExecuteReset" IsVisible="@IsOverridden" UpdateChildrenStates="true">
+                                  <Children>
+                                    <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                                      <Children>
+                                        <BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="20" SuggestedHeight="20" VerticalAlignment="Center" MarginRight="6" Brush="RefreshButton.Flat" DoNotAcceptEvents="true" />
+                                        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="17" Text="@ResetText" />
+                                      </Children>
+                                    </ListPanel>
+                                    <HintWidget DataSource="{ResetHint}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint" IsDisabled="true" />
+                                  </Children>
+                                </ButtonWidget>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@VanillaTagText" IsHidden="@IsOverridden" />
+                              </Children>
+                            </Widget>
+                          </Children>
+                        </ListPanel>
+                      </Children>
+                    </Widget>
+                  </ItemTemplate>
+                </ListPanel>
+              </Children>
+            </Widget>
+
+            <!-- ===================== Right: the item picker ===================== -->
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="1110" MarginRight="30" MarginTop="100" MarginBottom="90">
+              <Children>
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#FFFFFFFF" AlphaFactor="0.03" />
+
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="30" MarginRight="30" Brush="Popup.Description.Text" Brush.FontSize="20" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@PickerIdleText" IsHidden="@IsPickerActive" />
+
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" IsVisible="@IsPickerActive">
+                  <Children>
+                    <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Top" MarginLeft="12" MarginRight="60" Brush="Popup.Description.Text" Brush.FontSize="22" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#E4C59BFF" Text="@PickerTitleText" />
+                    <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="40" SuggestedHeight="32" HorizontalAlignment="Right" VerticalAlignment="Top" MarginRight="8" MarginTop="2" Brush="ButtonSimpleBrush" Command.Click="ExecuteClosePicker" UpdateChildrenStates="true">
+                      <Children>
+                        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="X" />
+                      </Children>
+                    </ButtonWidget>
+
+                    <!-- Filters: tier, culture, type -->
+                    <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="64" VerticalAlignment="Top" MarginTop="40" MarginLeft="6" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                      <Children>
+                        <Widget DataSource="{TierFilter}" WidthSizePolicy="Fixed" SuggestedWidth="180" HeightSizePolicy="StretchToParent" MarginRight="8">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22" VerticalAlignment="Top" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@LabelText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Left" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecutePrevious" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&lt;" />
+                              </Children>
+                            </ButtonWidget>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Bottom" MarginLeft="30" MarginRight="30" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#F4E9D6FF" Text="@ValueText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Right" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecuteNext" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&gt;" />
+                              </Children>
+                            </ButtonWidget>
+                          </Children>
+                        </Widget>
+                        <Widget DataSource="{CultureFilter}" WidthSizePolicy="Fixed" SuggestedWidth="190" HeightSizePolicy="StretchToParent" MarginRight="8">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22" VerticalAlignment="Top" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@LabelText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Left" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecutePrevious" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&lt;" />
+                              </Children>
+                            </ButtonWidget>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Bottom" MarginLeft="30" MarginRight="30" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#F4E9D6FF" Text="@ValueText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Right" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecuteNext" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&gt;" />
+                              </Children>
+                            </ButtonWidget>
+                          </Children>
+                        </Widget>
+                        <Widget DataSource="{TypeFilter}" WidthSizePolicy="Fixed" SuggestedWidth="180" HeightSizePolicy="StretchToParent">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22" VerticalAlignment="Top" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@LabelText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Left" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecutePrevious" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&lt;" />
+                              </Children>
+                            </ButtonWidget>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Bottom" MarginLeft="30" MarginRight="30" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#F4E9D6FF" Text="@ValueText" />
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="28" SuggestedHeight="34" HorizontalAlignment="Right" VerticalAlignment="Bottom" Brush="ButtonSimpleBrush" Command.Click="ExecuteNext" UpdateChildrenStates="true">
+                              <Children>
+                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="&gt;" />
+                              </Children>
+                            </ButtonWidget>
+                          </Children>
+                        </Widget>
+                      </Children>
+                    </ListPanel>
+
+                    <!-- Search by name -->
+                    <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="36" VerticalAlignment="Top" MarginTop="112" MarginLeft="10" MarginRight="10" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                      <Children>
+                        <TextWidget WidthSizePolicy="Fixed" SuggestedWidth="70" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Left" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@SearchLabelText" />
+                        <Widget WidthSizePolicy="Fixed" SuggestedWidth="380" HeightSizePolicy="StretchToParent">
+                          <Children>
+                            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.55" DoNotAcceptEvents="true" />
+                            <EditableTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="8" MarginRight="8" Brush="Review.NameInput.Text" Brush.FontSize="18" Brush.TextHorizontalAlignment="Left" RealText="@SearchText" MaxLength="40" />
+                          </Children>
+                        </Widget>
+                        <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="36" SuggestedHeight="34" VerticalAlignment="Center" MarginLeft="8" Brush="ButtonSimpleBrush" Command.Click="ExecuteClearSearch" UpdateChildrenStates="true">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="16" Text="X" />
+                          </Children>
+                        </ButtonWidget>
+                      </Children>
+                    </ListPanel>
+
+                    <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" VerticalAlignment="Top" MarginTop="154" MarginLeft="12" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#9C968CFF" Text="@ResultText" />
+
+                    <!-- The cards -->
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginTop="184" MarginBottom="6" MarginLeft="4" MarginRight="4">
+                      <Children>
+                        <ScrollablePanel Id="PickerScroller" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginRight="14" ClipRect="PickerClip" InnerPanel="PickerClip\PickerGrid" VerticalScrollbar="..\PickerScrollbar" AutoHideScrollBars="true">
+                          <Children>
+                            <Widget Id="PickerClip" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+                              <Children>
+                                <GridWidget Id="PickerGrid" DataSource="{Cards}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" DefaultCellWidth="180" DefaultCellHeight="164" ColumnCount="3">
+                                  <ItemTemplate>
+                                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="4" MarginRight="4" MarginTop="4" MarginBottom="4">
+                                      <Children>
+                                        <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ButtonSimpleBrush" Command.Click="ExecuteSelect" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint" UpdateChildrenStates="true">
+                                          <Children>
+                                            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#B8893EFF" AlphaFactor="0.3" IsVisible="@IsCurrent" DoNotAcceptEvents="true" />
+                                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="150" SuggestedHeight="75" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="8" DoNotAcceptEvents="true">
+                                              <Children>
+                                                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.35" DoNotAcceptEvents="true" />
+                                                <ImageIdentifierWidget DataSource="{Visual}" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" AdditionalArgs="@AdditionalArgs" ImageId="@Id" TextureProviderName="@TextureProviderName" />
+                                                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="20" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@NameText" IsVisible="@IsEmptyChoice" DoNotAcceptEvents="true" />
+                                              </Children>
+                                            </Widget>
+                                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="44" VerticalAlignment="Top" MarginTop="86" MarginLeft="6" MarginRight="6" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Top" Brush.FontColor="#F4E9D6FF" Text="@NameText" IsHidden="@IsEmptyChoice" DoNotAcceptEvents="true" />
+                                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="20" VerticalAlignment="Bottom" MarginBottom="6" MarginLeft="6" MarginRight="6" Brush="Popup.Description.Text" Brush.FontSize="13" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@DetailText" DoNotAcceptEvents="true" />
+                                          </Children>
+                                        </ButtonWidget>
+                                      </Children>
+                                    </Widget>
+                                  </ItemTemplate>
+                                </GridWidget>
+                              </Children>
+                            </Widget>
+                          </Children>
+                        </ScrollablePanel>
+                        <ScrollbarWidget Id="PickerScrollbar" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="8" HorizontalAlignment="Right" VerticalAlignment="Center" AlignmentAxis="Vertical" Handle="PickerScrollbarHandle" MinValue="0" MaxValue="100">
+                          <Children>
+                            <BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="2" HorizontalAlignment="Center" Brush="Encyclopedia.Scrollbar.Flat.Bed" />
+                            <BrushWidget Id="PickerScrollbarHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="6" SuggestedHeight="50" HorizontalAlignment="Center" Brush="Encyclopedia.Scrollbar.Flat.Handle" />
+                          </Children>
+                        </ScrollbarWidget>
+                      </Children>
+                    </Widget>
+                  </Children>
+                </Widget>
+              </Children>
+            </Widget>
+
+            <!-- Bottom: the note and Done (Escape does the same) -->
+            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="52" VerticalAlignment="Bottom" MarginBottom="20" MarginLeft="30" MarginRight="270" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Left" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@NoteText" />
+            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="52" HorizontalAlignment="Right" VerticalAlignment="Bottom" MarginRight="30" MarginBottom="20" Brush="Popup.Done.Button" Command.Click="ExecuteClose" UpdateChildrenStates="true">
+              <Children>
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="22" Text="@CloseText" />
+              </Children>
+            </ButtonWidget>
+
+          </Children>
+        </Widget>
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>
