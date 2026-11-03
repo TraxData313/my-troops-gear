@@ -39,7 +39,13 @@ dotnet build src\MyTroopsGear -c Release
 dotnet test tests\MyTroopsGear.Core.Tests -c Release
 powershell -ExecutionPolicy Bypass -File tools\check-gui.ps1  # after a build: prefabs + prefab extensions vs game widgets/brushes/sprites/bindings
 powershell -ExecutionPolicy Bypass -File tools\deploy.ps1     # builds + installs Modules\MyTroopsGear.Dev, "(dev)"
+powershell -ExecutionPolicy Bypass -File tools\package.ps1    # release: dist\MyTroopsGear (Workshop folder) + dist\MyTroopsGear_v<ver>.zip; never touches the game
+python tools\make_thumbnail.py                                 # docs\thumbnail.jpg (1024x1024) from docs\screenshots
 ```
+
+Release: version in `module\SubModule.xml` (Id `MyTroopsGear`; only deploy.ps1 re-badges it `.Dev`). Store texts:
+`tools\NEXUS-DESCRIPTION.bbcode`, `tools\STEAM-DESCRIPTION.bbcode`; Steam upload steps in `tools\WORKSHOP-UPLOAD.md`.
+Never install the non-dev module into the game's Modules (it would load beside `MyTroopsGear.Dev`).
 
 deploy.ps1 refuses if the DLLs are locked (game running). Never launch, restart or kill the game without asking Toni.
 Mod log: `Documents\Mount and Blade II Bannerlord\Configs\MyTroopsGear\my_troops_gear.log`.
