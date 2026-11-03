@@ -26,10 +26,14 @@ namespace MyTroopsGear.UI
         private static GearEditorVM? _vm;
         private static GearBehavior? _behavior;
         private static bool _closeRequested;
+        private static Action<CharacterObject>? _onClosed;
 
         public static bool IsOpen => _layer != null;
 
-        public static void Open(CharacterObject troop)
+        /// <param name="onClosed">Called once after this window closed (the Encyclopedia page that opened it refreshes its
+        /// look). Held only while the window is open - a static event would keep every unit page ever shown alive, since
+        /// the Encyclopedia never finalizes the pages it navigates away from.</param>
+        public static void Open(CharacterObject troop, Action<CharacterObject>? onClosed = null)
         {
             if (IsOpen)
                 Close();
@@ -52,6 +56,7 @@ namespace MyTroopsGear.UI
                 _host.AddLayer(_layer);
                 ScreenManager.TrySetFocus(_layer);
                 _closeRequested = false;
+                _onClosed = onClosed;
                 ModLog.Info("editor", "opened for " + troop.StringId);
             }
             catch (Exception e)
@@ -78,23 +83,22 @@ namespace MyTroopsGear.UI
             _vm = null;
             _behavior = null;
             _closeRequested = false;
+            var onClosed = _onClosed;
+            _onClosed = null;
 
             EditorColors.HideTooltip();
             if (layer != null)
             {
-                try
+                // Each step on its own: a failing movie release must not leave the layer (and its input block) behind.
+                Try("releasing the movie", () =>
                 {
                     layer.IsFocusLayer = false;
                     if (movie != null)
                         layer.ReleaseMovie(movie);
-                    layer.InputRestrictions.ResetInputRestrictions();
-                    host?.RemoveLayer(layer);
-                    ScreenManager.TryLoseFocus(layer);
-                }
-                catch (Exception e)
-                {
-                    ModLog.Error("editor", "closing the layer", e);
-                }
+                });
+                Try("resetting input", () => layer.InputRestrictions.ResetInputRestrictions());
+                Try("removing the layer", () => host?.RemoveLayer(layer));
+                Try("giving focus back", () => ScreenManager.TryLoseFocus(layer));
             }
             if (vm != null)
             {
@@ -107,12 +111,21 @@ namespace MyTroopsGear.UI
                     ModLog.Error("editor", "finalizing the view model", e);
                 }
                 ModLog.Info("editor", "closed");
-                EditorClosed?.Invoke(vm.Troop);
+                Try("refreshing the page", () => onClosed?.Invoke(vm.Troop));
             }
         }
 
-        /// <summary>Raised after the window closed (the Encyclopedia page can refresh its look).</summary>
-        public static event Action<CharacterObject>? EditorClosed;
+        private static void Try(string what, Action step)
+        {
+            try
+            {
+                step();
+            }
+            catch (Exception e)
+            {
+                ModLog.Error("editor", "closing: " + what, e);
+            }
+        }
 
         /// <summary>Every application tick (SubModule). Cheap when closed.</summary>
         public static void Tick(float dt)

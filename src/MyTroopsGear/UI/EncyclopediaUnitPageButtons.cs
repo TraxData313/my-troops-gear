@@ -84,7 +84,6 @@ namespace MyTroopsGear.UI
             {
                 ModLog.ErrorOnce("encyclopedia troop", e);
             }
-            GearEditorWindow.EditorClosed += OnEditorClosed;
             ApplyView(force: false);
         }
 
@@ -109,12 +108,6 @@ namespace MyTroopsGear.UI
                 }
             }
             ApplyView(force: false);
-        }
-
-        public override void OnFinalize()
-        {
-            GearEditorWindow.EditorClosed -= OnEditorClosed;
-            base.OnFinalize();
         }
 
         [DataSourceProperty]
@@ -165,7 +158,7 @@ namespace MyTroopsGear.UI
             try
             {
                 if (_troop != null)
-                    GearEditorWindow.Open(_troop);
+                    GearEditorWindow.Open(_troop, OnEditorClosed);
             }
             catch (Exception e)
             {
