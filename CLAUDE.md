@@ -10,13 +10,15 @@ replacement for My Little Warband (no custom troop tree; copy none of MLW's code
 - `src\MyTroopsGear.Core` - netstandard2.0, no game references: the override model (`GearSlots`,
   `TroopOverride`, `OverrideStore`) and its save lines; the editor's pure logic (`GearEditing`: per-slot
   revert with the block rules; `ItemCandidates`: picker filters; `UnitPageView`: the unit page's
-  Vanilla | My version rules). Unit-tested.
+  Vanilla | My version rules; `PartyCardLook`: which party screen cards get my look). Unit-tested.
 - `src\MyTroopsGear` - net472 module: `SubModule`, `GearBehavior` (save), `GearScope` (whose parties),
   `SpawnPatch` (Harmony prefix on `Mission.SpawnAgent`), `GearApplier`, `GearCommands` (console), `ModLog`.
   `UI\`: `EncyclopediaUnitPageButtons` (mixin + prefab insert on the unit page: "Vanilla | My version" toggle, shown
   only for edited troops, rebuilds the set selector from override-applied clones; session-static choice; and "Edit gear"), `GearEditorWindow`
   (layer 320, above the Encyclopedia's 310; Esc closes), `GearEditorVM` + `GearEditorParts`, `ItemCatalog`,
-  `EncyclopediaBackGuard` (holds the Encyclopedia's Backspace-back while the editor is open).
+  `EncyclopediaBackGuard` (holds the Encyclopedia's Backspace-back while the editor is open), `PartyScreenPatch`
+  (postfix on `PartyCharacterVM.GetCharacterCode`: troop cards + upgrade previews of my side's members show the
+  edited look from a cloned first battle set; prisoners, heroes and the other party stay vanilla; no cache).
 - `tests\MyTroopsGear.Core.Tests` - xunit, net8.0.
 - `module\` - SubModule.xml, `GUI\Prefabs\MyTroopsGearEditor.xml`. Build output lands in `module\bin` (git-ignored).
 - Machine paths: `Directory.Build.props.user` (git-ignored) sets `GameFolder`, `HarmonyBinFolder`, `UIExtenderExBinFolder`.
