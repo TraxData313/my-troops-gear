@@ -370,6 +370,18 @@ foreach ($t in $ourTypes) {
         $baseT = $baseT.BaseType
     }
 }
+# A [ViewModelMixin("SomeRefresh")] makes UIExtenderEx Harmony-patch (JIT) that game method in OnSubModuleLoad, before
+# GameTexts exists; EncyclopediaUnitPageVM.RefreshValues poisoned CampaignUIHelper's static constructor that way and the
+# campaign map crashed on load (2026-11-03). Follow refresh methods with our own Harmony postfix in OnGameStart instead.
+foreach ($t in $ourTypes) {
+    foreach ($a in ($t.GetCustomAttributes($false) | Where-Object { $_.GetType().Name -eq "ViewModelMixinAttribute" })) {
+        foreach ($p in $a.GetType().GetProperties()) {
+            if ($p.PropertyType -eq [string] -and -not [string]::IsNullOrEmpty([string]$p.GetValue($a))) {
+                $problems.Add("$($t.Name): [ViewModelMixin] names a refresh method ('$($p.GetValue($a))') - patched at module load, can crash the game; use a Harmony postfix in OnGameStart")
+            }
+        }
+    }
+}
 foreach ($t in $ourTypes) {
     $attr = $t.GetCustomAttributes($false) | Where-Object { $_.GetType().Name -eq "PrefabExtensionAttribute" } | Select-Object -First 1
     if ($attr -eq $null) { continue }

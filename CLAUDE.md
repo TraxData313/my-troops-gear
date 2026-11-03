@@ -67,6 +67,12 @@ Console (Ctrl+~ in campaign; set numbers are 1-based like the editor): `mytroops
   civilian), so tournaments, arena and practice fights stay untouched. It must never throw into the mission:
   try/catch + `ModLog.ErrorOnce`.
 - Autoresolve ignores gear; overrides only matter in missions.
+- **Patch nothing at module load.** Harmony JIT-compiles the method it patches; a game UI method that reads a static
+  field of a helper class (e.g. `CampaignUIHelper.SkillObjectComparerInstance`) runs that class's static constructor
+  right then, and before a Game exists `GameTexts.FindText` throws inside it - the type stays broken for the whole run
+  and the campaign map crashes on load (happened 2026-11-03 with `[ViewModelMixin("RefreshValues")]`, which makes
+  UIExtenderEx patch `RefreshValues` in OnSubModuleLoad). So: `[ViewModelMixin]` without a refresh method name
+  (check-gui fails otherwise), and all Harmony patches in `OnGameStart`, each in its own try/catch with a log line.
 
 ## Save format
 
