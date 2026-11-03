@@ -57,6 +57,15 @@ namespace MyTroopsGear
             }
             try
             {
+                UI.PartyScreenPatch.Apply(new Harmony(HarmonyId));
+                ModLog.Info("load", "party screen patch applied");
+            }
+            catch (Exception e)
+            {
+                ModLog.Error("load", "patching the party screen troop images failed (cards stay vanilla)", e);
+            }
+            try
+            {
                 SpawnPatch.Apply(new Harmony(HarmonyId));
                 ModLog.Info("load", "spawn patch applied");
             }
