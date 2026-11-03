@@ -1,4 +1,4 @@
-using MyTroopsGear.Core;
+﻿using MyTroopsGear.Core;
 
 namespace MyTroopsGear.Core.Tests;
 
@@ -19,19 +19,19 @@ public class GearEditingTests
     public void Armour_revert_drops_the_slot()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Head, "helmet_x", Seed);
-        store.Set("t", GearSlots.Body, "mail_x", Seed);
-        Assert.True(GearEditing.RevertSlot(store, "t", GearSlots.Head, Seed));
-        Assert.False(store.Get("t")!.IsOverridden(GearSlots.Head));
-        Assert.True(store.Get("t")!.IsOverridden(GearSlots.Body));
+        store.Set("t", 0, GearSlots.Head, "helmet_x", Seed);
+        store.Set("t", 0, GearSlots.Body, "mail_x", Seed);
+        Assert.True(GearEditing.RevertSlot(store, "t", 0, GearSlots.Head, Seed));
+        Assert.False(store.GetSet("t", 0)!.IsOverridden(GearSlots.Head));
+        Assert.True(store.GetSet("t", 0)!.IsOverridden(GearSlots.Body));
     }
 
     [Fact]
     public void Reverting_the_last_slot_removes_the_troop()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Head, "helmet_x", Seed);
-        GearEditing.RevertSlot(store, "t", GearSlots.Head, Seed);
+        store.Set("t", 0, GearSlots.Head, "helmet_x", Seed);
+        GearEditing.RevertSlot(store, "t", 0, GearSlots.Head, Seed);
         Assert.False(store.HasOverride("t"));
     }
 
@@ -39,10 +39,10 @@ public class GearEditingTests
     public void Weapon_revert_sets_that_slot_to_vanilla_and_keeps_the_rest_of_the_block()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Weapon0, "sword_x", Seed);
-        store.Set("t", GearSlots.Weapon2, "bow_x", Seed);
-        Assert.True(GearEditing.RevertSlot(store, "t", GearSlots.Weapon0, Seed));
-        var o = store.Get("t")!;
+        store.Set("t", 0, GearSlots.Weapon0, "sword_x", Seed);
+        store.Set("t", 0, GearSlots.Weapon2, "bow_x", Seed);
+        Assert.True(GearEditing.RevertSlot(store, "t", 0, GearSlots.Weapon0, Seed));
+        var o = store.GetSet("t", 0)!;
         Assert.True(o.TryGet(GearSlots.Weapon0, out var w0));
         Assert.Equal("spear_a", w0);
         Assert.True(o.TryGet(GearSlots.Weapon2, out var w2));
@@ -53,10 +53,10 @@ public class GearEditingTests
     public void Weapon_revert_of_a_vanilla_empty_slot_sets_empty()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Weapon0, "sword_x", Seed);
-        store.Set("t", GearSlots.Weapon3, "javelin_x", Seed);
-        GearEditing.RevertSlot(store, "t", GearSlots.Weapon3, Seed);
-        Assert.True(store.Get("t")!.TryGet(GearSlots.Weapon3, out var w3));
+        store.Set("t", 0, GearSlots.Weapon0, "sword_x", Seed);
+        store.Set("t", 0, GearSlots.Weapon3, "javelin_x", Seed);
+        GearEditing.RevertSlot(store, "t", 0, GearSlots.Weapon3, Seed);
+        Assert.True(store.GetSet("t", 0)!.TryGet(GearSlots.Weapon3, out var w3));
         Assert.Equal(GearSlots.Empty, w3);
     }
 
@@ -64,10 +64,10 @@ public class GearEditingTests
     public void Block_back_on_all_vanilla_items_goes_back_to_the_random_roll()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Weapon0, "sword_x", Seed);
-        store.Set("t", GearSlots.Head, "helmet_x", Seed);
-        GearEditing.RevertSlot(store, "t", GearSlots.Weapon0, Seed);
-        var o = store.Get("t")!;
+        store.Set("t", 0, GearSlots.Weapon0, "sword_x", Seed);
+        store.Set("t", 0, GearSlots.Head, "helmet_x", Seed);
+        GearEditing.RevertSlot(store, "t", 0, GearSlots.Weapon0, Seed);
+        var o = store.GetSet("t", 0)!;
         Assert.False(o.HasWeaponBlock);
         Assert.True(o.IsOverridden(GearSlots.Head));
     }
@@ -76,12 +76,12 @@ public class GearEditingTests
     public void Mount_pair_revert_follows_the_same_rule()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Horse, "warhorse_x", Seed);
-        store.Set("t", GearSlots.Harness, "barding_x", Seed);
-        GearEditing.RevertSlot(store, "t", GearSlots.Horse, Seed);
-        Assert.True(store.Get("t")!.TryGet(GearSlots.Horse, out var h));
+        store.Set("t", 0, GearSlots.Horse, "warhorse_x", Seed);
+        store.Set("t", 0, GearSlots.Harness, "barding_x", Seed);
+        GearEditing.RevertSlot(store, "t", 0, GearSlots.Horse, Seed);
+        Assert.True(store.GetSet("t", 0)!.TryGet(GearSlots.Horse, out var h));
         Assert.Equal("horse_a", h);
-        GearEditing.RevertSlot(store, "t", GearSlots.Harness, Seed);
+        GearEditing.RevertSlot(store, "t", 0, GearSlots.Harness, Seed);
         Assert.False(store.HasOverride("t"));
     }
 
@@ -89,18 +89,18 @@ public class GearEditingTests
     public void Revert_of_an_untouched_slot_does_nothing()
     {
         var store = new OverrideStore();
-        Assert.False(GearEditing.RevertSlot(store, "t", GearSlots.Head, Seed));
-        store.Set("t", GearSlots.Body, "mail_x", Seed);
-        Assert.False(GearEditing.RevertSlot(store, "t", GearSlots.Weapon1, Seed));
-        Assert.Single(store.Get("t")!.Slots);
+        Assert.False(GearEditing.RevertSlot(store, "t", 0, GearSlots.Head, Seed));
+        store.Set("t", 0, GearSlots.Body, "mail_x", Seed);
+        Assert.False(GearEditing.RevertSlot(store, "t", 0, GearSlots.Weapon1, Seed));
+        Assert.Single(store.GetSet("t", 0)!.Slots);
     }
 
     [Fact]
     public void Reset_troop_clears_everything()
     {
         var store = new OverrideStore();
-        store.Set("t", GearSlots.Weapon0, "sword_x", Seed);
-        store.Set("t", GearSlots.Head, "helmet_x", Seed);
+        store.Set("t", 0, GearSlots.Weapon0, "sword_x", Seed);
+        store.Set("t", 0, GearSlots.Head, "helmet_x", Seed);
         Assert.True(GearEditing.ResetTroop(store, "t"));
         Assert.False(store.HasOverride("t"));
         Assert.False(GearEditing.ResetTroop(store, "t"));
