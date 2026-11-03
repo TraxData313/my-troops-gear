@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -13,8 +13,9 @@ namespace MyTroopsGear
     /// through it with a party agent origin, so this single patch covers them.
     ///
     /// When the agent is a non-hero troop of one of MY parties (<see cref="GearScope"/>) with an override, it
-    /// rolls the vanilla gear exactly as SpawnAgent would (same seed), lays the override on top and hands the
-    /// result to SpawnAgent through <c>AgentBuildData.Equipment(...)</c>. SpawnAgent's own later steps (no
+    /// picks one vanilla battle set with the agent's seed (<see cref="MyTroopsGear.Core.SpawnSet"/>: vanilla's own
+    /// first draw). If that set is edited, the soldier wears that set whole with its edits (handed to SpawnAgent
+    /// through <c>AgentBuildData.Equipment(...)</c>); if not, vanilla rolls its usual per-slot mix untouched. SpawnAgent's own later steps (no
     /// horses in sieges / naval, banner bearer, no-armour flags) still run on it.
     ///
     /// Untouched: anything that already chose its gear (tournaments, arena, practice fights and other mods all
@@ -50,8 +51,9 @@ namespace MyTroopsGear
                 if (!(agentBuildData.AgentOrigin?.BattleCombatant is PartyBase party) || !GearScope.IsMine(party))
                     return;
 
-                var equipment = GearApplier.RollWithOverride(troop, over, agentBuildData.AgentEquipmentSeed);
-                agentBuildData.Equipment(equipment);
+                var equipment = GearApplier.SpawnEquipment(troop, over, agentBuildData.AgentEquipmentSeed);
+                if (equipment != null)
+                    agentBuildData.Equipment(equipment);
             }
             catch (Exception e)
             {

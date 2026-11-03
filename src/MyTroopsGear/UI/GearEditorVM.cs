@@ -11,10 +11,11 @@ using TaleWorlds.Library;
 namespace MyTroopsGear.UI
 {
     /// <summary>
-    /// The gear editor of one troop (movie <see cref="GearEditorWindow.MovieName"/>). Left: the troop on a tableau,
-    /// wearing a CLONE of one of its vanilla battle sets with our overrides written on top (arrows step through the
-    /// sets, so the untouched slots show how they roll). Middle: one row per slot with Change and Reset. Right: the
-    /// item picker of the slot being changed. Every edit goes straight to the campaign's store - free and instant.
+    /// The gear editor of one troop (movie <see cref="GearEditorWindow.MovieName"/>), one vanilla battle set at a time.
+    /// Left: the troop on a tableau, wearing a CLONE of the edited set with that set's edits written on top; the arrows
+    /// pick the set being edited (the troop's BattleEquipments in game order - the indices the store and the spawn use).
+    /// Middle: one row per slot of THIS set with Change, Reset (this slot, this set) and All sets (this row's item onto
+    /// that slot of every set). Right: the item picker of the slot being changed. Every edit goes straight to the campaign's store - free and instant.
     /// The troop's own CharacterObject equipment is never written to.
     /// </summary>
     internal sealed class GearEditorVM : ViewModel
@@ -24,6 +25,7 @@ namespace MyTroopsGear.UI
 
         private readonly CharacterObject _troop;
         private readonly List<Equipment> _sets;
+        private readonly Func<int, int, string?> _vanillaOf;
         private int _setIndex;
         private int? _pickerSlot;
         private Equipment _preview = new Equipment();
@@ -34,6 +36,7 @@ namespace MyTroopsGear.UI
         private string _warningText = "";
         private bool _hasWarning;
         private bool _canResetAll;
+        private bool _canResetSet;
         private string _resetAllText = "";
         private bool _isPickerActive;
         private string _pickerTitleText = "";
@@ -45,6 +48,7 @@ namespace MyTroopsGear.UI
         {
             _troop = troop;
             _sets = VanillaSets(troop);
+            _vanillaOf = GearApplier.VanillaOf(troop);
             TitleText = troop.Name?.ToString() ?? troop.StringId;
             SubtitleText = "Tier " + troop.Tier + " " + (troop.Culture?.Name?.ToString() ?? "") + " - "
                            + FormationName(troop.DefaultFormationClass);
@@ -60,8 +64,9 @@ namespace MyTroopsGear.UI
             CultureFilter = new CycleFilterVM("Culture", OnFilterChanged);
             TypeFilter = new CycleFilterVM("Type", OnFilterChanged);
             TierFilter.SetOptions(TierOptions(), ItemCandidates.DefaultMaxTier(troop.Tier));
-            ResetAllHint = EditorColors.Hint("Every slot of this troop back to vanilla: it rolls its own sets again. "
-                                             + "Click twice to confirm.");
+            ResetAllHint = EditorColors.Hint("Every slot of every set of this troop back to vanilla: it rolls its own sets "
+                                             + "again. Click twice to confirm.");
+            ResetSetHint = EditorColors.Hint("Every slot of the set shown here back to vanilla. The other sets keep their edits.");
             ResetAllText = ResetAllIdleText;
             Refresh();
         }
@@ -102,6 +107,12 @@ namespace MyTroopsGear.UI
 
         [DataSourceProperty] public HintViewModel ResetAllHint { get; }
 
+        [DataSourceProperty] public HintViewModel ResetSetHint { get; }
+
+        [DataSourceProperty] public string ResetSetText => "Reset this set";
+
+        public int SetCount => _sets.Count;
+
         [DataSourceProperty] public bool HasManySets => _sets.Count > 1;
 
         [DataSourceProperty]
@@ -137,6 +148,13 @@ namespace MyTroopsGear.UI
         {
             get => _canResetAll;
             set { if (value != _canResetAll) { _canResetAll = value; OnPropertyChangedWithValue(value, nameof(CanResetAll)); } }
+        }
+
+        [DataSourceProperty]
+        public bool CanResetSet
+        {
+            get => _canResetSet;
+            set { if (value != _canResetSet) { _canResetSet = value; OnPropertyChangedWithValue(value, nameof(CanResetSet)); } }
         }
 
         [DataSourceProperty]
@@ -215,6 +233,14 @@ namespace MyTroopsGear.UI
             Edit("reset all", store => GearEditing.ResetTroop(store, _troop.StringId));
         }
 
+        /// <summary>One click (the other sets keep their edits, so it is cheap to redo).</summary>
+        public void ExecuteResetSet()
+        {
+            if (!CanResetSet) return;
+            int set = _setIndex;
+            Edit("reset set " + (set + 1), store => GearEditing.ResetSet(store, _troop.StringId, set));
+        }
+
         public void OpenPicker(int slot)
         {
             _pickerSlot = slot;
@@ -226,8 +252,20 @@ namespace MyTroopsGear.UI
             RefreshCards();
         }
 
-        public void RevertSlot(int slot) =>
-            Edit("reset " + GearSlots.Name(slot), store => GearEditing.RevertSlot(store, _troop.StringId, slot, VanillaId));
+        public void RevertSlot(int slot)
+        {
+            int set = _setIndex;
+            Edit("set " + (set + 1) + " reset " + GearSlots.Name(slot),
+                store => GearEditing.RevertSlot(store, _troop.StringId, set, slot, s => _vanillaOf(set, s)));
+        }
+
+        /// <summary>The row's "All sets": what this set wears in <paramref name="slot"/> goes onto that slot of every set.</summary>
+        public void ApplyToAllSets(int slot)
+        {
+            int set = _setIndex;
+            Edit("set " + (set + 1) + " " + GearSlots.Name(slot) + " to all sets",
+                store => GearEditing.ApplyToAllSets(store, _troop.StringId, set, slot, _sets.Count, _vanillaOf) > 0);
+        }
 
         /// <summary>A picker card: <paramref name="item"/> (null = the Empty card) goes into the open slot.</summary>
         public void Pick(ItemObject? item)
@@ -244,9 +282,10 @@ namespace MyTroopsGear.UI
                 }
             }
             var id = item?.StringId ?? GearSlots.Empty;
-            Edit("set " + GearSlots.Name(slot) + "=" + id, store =>
+            int set = _setIndex;
+            Edit("set " + (set + 1) + " " + GearSlots.Name(slot) + "=" + id, store =>
             {
-                GearEditing.SetSlot(store, _troop.StringId, slot, id, VanillaId);
+                GearEditing.SetSlot(store, _troop.StringId, set, slot, id, s => _vanillaOf(set, s));
                 return true;
             });
         }
@@ -262,7 +301,7 @@ namespace MyTroopsGear.UI
 
         // ---- internals ----------------------------------------------------------------------------------
 
-        private string? VanillaId(int slot) => GearApplier.VanillaItemId(_troop, slot);
+        private string? VanillaId(int slot) => _vanillaOf(_setIndex, slot);
 
         private void Edit(string what, Func<OverrideStore, bool> change)
         {
@@ -301,33 +340,38 @@ namespace MyTroopsGear.UI
         {
             var vanilla = _sets[_setIndex];
             var over = Store?.Get(_troop.StringId);
+            var setOver = over?.GetSet(_setIndex);
             _preview = vanilla.Clone();
-            if (over != null)
-                GearApplier.Apply(over, _preview);
+            GearApplier.Apply(setOver, _preview);
             Character.SetEquipment(_preview);
 
-            SetText = "Vanilla set " + (_setIndex + 1) + " / " + _sets.Count;
+            SetText = "Set " + (_setIndex + 1) + " / " + _sets.Count;
             foreach (var row in Slots)
             {
-                if (over != null && over.TryGet(row.Slot, out var id))
-                    row.Show(GearApplier.FindItem(id), GearEditing.IsSlotEdited(over, row.Slot, VanillaId));
+                if (setOver != null && setOver.TryGet(row.Slot, out var id))
+                    row.Show(GearApplier.FindItem(id), GearEditing.IsSlotEdited(setOver, row.Slot, VanillaId));
                 else
                     row.Show(vanilla[(EquipmentIndex)row.Slot].Item, edited: false);
+                row.IsAllSetsVisible = HasManySets;
+                row.CanApplyAllSets = HasManySets && GearEditing.CanApplyToAllSets(over, _setIndex, row.Slot, _sets.Count, _vanillaOf);
             }
             int edited = Slots.Count(r => r.IsOverridden);
+            int total = GearEditing.EditedSlotCount(over, _vanillaOf);
             CanResetAll = over != null;
-            EditedSummaryText = edited == 0 ? "All vanilla" : edited + " slot" + (edited == 1 ? "" : "s") + " edited";
+            CanResetSet = setOver != null;
+            var here = edited == 0 ? "No slots edited in this set" : edited + " slot" + (edited == 1 ? "" : "s") + " edited in this set";
+            EditedSummaryText = total > edited ? here + " (" + total + " in all sets)" : here;
             if (!CanResetAll)
             {
                 _resetArmedFor = 0f;
                 ResetAllText = ResetAllIdleText;
             }
-            var warning = MountWarning(over);
+            var warning = MountWarning(setOver);
             WarningText = warning ?? "";
             HasWarning = warning != null;
         }
 
-        private string? MountWarning(TroopOverride? over)
+        private string? MountWarning(SetOverride? over)
         {
             if (over == null || !over.TryGet(GearSlots.Horse, out var horse))
                 return null;
@@ -443,23 +487,11 @@ namespace MyTroopsGear.UI
             return list;
         }
 
-        /// <summary>The troop's distinct vanilla battle sets (as the Encyclopedia lists them), never empty.</summary>
+        /// <summary>The troop's vanilla battle sets in game order, never empty. NOT de-duplicated like the Encyclopedia's
+        /// list: set i here is set i in the store and at spawn, so two equal vanilla sets are edited separately.</summary>
         private static List<Equipment> VanillaSets(CharacterObject troop)
         {
-            var sets = new List<Equipment>();
-            try
-            {
-                foreach (var eq in troop.BattleEquipments)
-                {
-                    if (eq == null || sets.Any(s => s.IsEquipmentEqualTo(eq)))
-                        continue;
-                    sets.Add(eq);
-                }
-            }
-            catch (Exception e)
-            {
-                ModLog.Error("editor", "reading the battle sets of " + troop.StringId, e);
-            }
+            var sets = GearApplier.BattleSets(troop);
             if (sets.Count == 0)
                 sets.Add(troop.FirstBattleEquipment ?? new Equipment());
             return sets;

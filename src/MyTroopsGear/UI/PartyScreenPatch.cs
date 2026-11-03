@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using MyTroopsGear.Core;
 using TaleWorlds.CampaignSystem;
@@ -18,8 +18,8 @@ namespace MyTroopsGear.UI
     /// other party in a trade, a loot/donation roster without an owner, or any prisoner (<see cref="PartyCardLook"/>).
     /// An upgrade preview uses the TARGET's override: that is what the troop wears after upgrading in my party.
     ///
-    /// The look is a clone of the troop's first battle set (stable, no flicker) with <see cref="GearApplier.Apply"/>
-    /// on top; the troop's own equipment is never written (Troop Equipment Upgrade reads it in PartyScreenLogic).
+    /// The look is a clone of the troop's first battle set (set 0: stable, no flicker) with set 0's edits on top;
+    /// the troop's own equipment is never written (Troop Equipment Upgrade reads it in PartyScreenLogic).
     /// No caching: every card build reads the current store, so the next party screen shows fresh edits.
     /// </summary>
     internal static class PartyScreenPatch
@@ -43,7 +43,7 @@ namespace MyTroopsGear.UI
         }
 
         /// <summary>The edited look of <paramref name="character"/> on this side of the screen, or null when it keeps
-        /// vanilla: a clone of the first battle set with the override on top (the troop is never written).</summary>
+        /// vanilla: a clone of battle set 0 with set 0's edits on top (the troop is never written).</summary>
         private static Equipment? EditedLook(CharacterObject? character, PartyScreenLogic.TroopType type,
             PartyScreenLogic.PartyRosterSide side, PartyScreenLogic? logic)
         {
@@ -51,7 +51,7 @@ namespace MyTroopsGear.UI
             var store = GearBehavior.Instance?.Store;
             if (store == null || store.Count == 0) return null;
             var over = store.Get(character.StringId);
-            var hasOverride = over != null && GearEditing.HasEdits(over, s => GearApplier.VanillaItemId(character, s));
+            var hasOverride = GearApplier.HasEdits(character, over);
             if (!hasOverride) return null;
 
             var owner = logic == null ? null
@@ -62,11 +62,8 @@ namespace MyTroopsGear.UI
                     hasOverride, GearScope.IsMine(owner)))
                 return null;
 
-            var baseSet = character.FirstBattleEquipment ?? character.Equipment;
-            if (baseSet == null) return null;
-            var equipment = baseSet.Clone();
-            GearApplier.Apply(over!, equipment);
-            return equipment;
+            // Set 0 (the first battle set) with set 0's edits: one stable look per troop, no flicker between sets.
+            return GearApplier.EditedSet(character, over, 0);
         }
 
         // Parameter names match the original's; ____partyScreenLogic is the protected field _partyScreenLogic.

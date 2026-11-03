@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Bannerlord.UIExtenderEx.Attributes;
 using Bannerlord.UIExtenderEx.Prefabs2;
@@ -143,18 +143,17 @@ namespace MyTroopsGear.UI
 
         [DataSourceProperty]
         public HintViewModel ShowMineHint { get; } = EditorColors.Hint(
-            "Show this troop as your parties field it: each vanilla set with your edited slots on top. "
+            "Show this troop as your parties field it: each vanilla set with that set's edits on top. "
             + "Remembered while you browse; troops you have not edited always show vanilla.");
 
-        /// <summary>The troop has at least one really edited slot (a block mate stored unchanged does not count).</summary>
+        /// <summary>Some set of the troop has a really edited slot (a block mate stored unchanged does not count).</summary>
         private bool HasOverride
         {
             get
             {
                 var troop = _troop;
                 if (troop == null) return false;
-                var over = GearBehavior.Instance?.Store.Get(troop.StringId);
-                return GearEditing.HasEdits(over, s => GearApplier.VanillaItemId(troop, s));
+                return GearApplier.HasEdits(troop, GearBehavior.Instance?.Store.Get(troop.StringId));
             }
         }
 
@@ -234,11 +233,12 @@ namespace MyTroopsGear.UI
             if (mine && over == null)
                 return false;
 
-            var sets = _troop.BattleEquipments.Where(e => e != null).Select(e =>
+            // Set i of the troop with set i's own edits (per-set editing); vanilla = the troop's own objects, read only.
+            var sets = GearApplier.BattleSets(_troop).Select((e, i) =>
             {
                 if (over == null) return e;
                 var clone = e.Clone();
-                GearApplier.Apply(over, clone);
+                GearApplier.Apply(over.GetSet(i), clone);
                 return clone;
             });
             var distinct = UnitPageView.DistinctInOrder(sets, (a, b) => a.IsEquipmentEqualTo(b));

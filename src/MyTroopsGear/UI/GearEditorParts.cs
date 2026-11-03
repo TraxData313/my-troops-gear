@@ -105,7 +105,7 @@ namespace MyTroopsGear.UI
         }
     }
 
-    /// <summary>One row of the slot list: the slot, what it holds, [Change] and [Reset].</summary>
+    /// <summary>One row of the slot list: the slot, what the edited set holds, [Change], [Reset] and [All sets].</summary>
     internal sealed class GearSlotVM : ViewModel
     {
         private readonly GearEditorVM _owner;
@@ -116,6 +116,8 @@ namespace MyTroopsGear.UI
         private bool _isOverridden;
         private bool _isSelected;
         private bool _hasItem;
+        private bool _canApplyAllSets;
+        private bool _isAllSetsVisible;
         private string _priceText = "";
         private ItemImageIdentifierVM _visual = new ItemImageIdentifierVM(null);
 
@@ -125,9 +127,10 @@ namespace MyTroopsGear.UI
             Slot = slot;
             SlotText = GearEditing.Label(slot);
             ResetHint = EditorColors.Hint(GearSlots.BlockOf(slot).Count > 1
-                ? "Back to this troop's own item for this slot. When every " + (GearSlots.IsWeapon(slot) ? "weapon" : "mount")
-                  + " slot is back on its own item, the troop rolls its vanilla sets again."
-                : "Back to vanilla: this slot rolls the troop's own sets again.");
+                ? "Back to this set's own item for this slot. When every " + (GearSlots.IsWeapon(slot) ? "weapon" : "mount")
+                  + " slot of the set is back on its own item, the set is vanilla there again."
+                : "Back to this set's own item for this slot. Other sets keep their edits.");
+            AllSetsHint = EditorColors.Hint("Put what this set has in this slot onto the same slot of every set of the troop.");
         }
 
         public int Slot { get; }
@@ -141,6 +144,26 @@ namespace MyTroopsGear.UI
         [DataSourceProperty] public string VanillaTagText => "vanilla";
 
         [DataSourceProperty] public HintViewModel ResetHint { get; }
+
+        [DataSourceProperty] public HintViewModel AllSetsHint { get; }
+
+        [DataSourceProperty] public string AllSetsText => "All sets";
+
+        /// <summary>Some other set wears something else in this slot.</summary>
+        [DataSourceProperty]
+        public bool CanApplyAllSets
+        {
+            get => _canApplyAllSets;
+            set { if (value != _canApplyAllSets) { _canApplyAllSets = value; OnPropertyChangedWithValue(value, nameof(CanApplyAllSets)); } }
+        }
+
+        /// <summary>The troop has more than one set.</summary>
+        [DataSourceProperty]
+        public bool IsAllSetsVisible
+        {
+            get => _isAllSetsVisible;
+            set { if (value != _isAllSetsVisible) { _isAllSetsVisible = value; OnPropertyChangedWithValue(value, nameof(IsAllSetsVisible)); } }
+        }
 
         [DataSourceProperty]
         public string ItemText
@@ -201,8 +224,8 @@ namespace MyTroopsGear.UI
 
         public ItemObject? Item => _item;
 
-        /// <summary><paramref name="edited"/>: the player's item (null = emptied), gold with Reset. Otherwise grey
-        /// "vanilla: X": the shown vanilla set's item, or a block mate stored unchanged with an edited weapon/mount.</summary>
+        /// <summary><paramref name="edited"/>: the player's item for this set (null = emptied), gold with Reset. Otherwise
+        /// grey "vanilla: X": the set's own item, or a block mate stored unchanged with an edited weapon/mount.</summary>
         public void Show(ItemObject? item, bool edited)
         {
             if (item != _item || Visual == null)
@@ -222,6 +245,12 @@ namespace MyTroopsGear.UI
         public void ExecuteChange() => _owner.OpenPicker(Slot);
 
         public void ExecuteReset() => _owner.RevertSlot(Slot);
+
+        public void ExecuteApplyAllSets()
+        {
+            if (CanApplyAllSets)
+                _owner.ApplyToAllSets(Slot);
+        }
 
         public void ExecuteBeginHint() => EditorColors.ShowItemTooltip(_item);
 

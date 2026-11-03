@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyTroopsGear.Core;
@@ -10,13 +10,18 @@ namespace MyTroopsGear
 {
     /// <summary>
     /// Owns the campaign's <see cref="OverrideStore"/> and saves it. The save holds ONE list of plain strings
-    /// (<c>troopId|slot|itemId</c>) under <see cref="SaveKey"/> - no SaveableTypeDefiner, no custom types - so
+    /// (<c>troopId|set|slot|itemId</c>) under <see cref="SaveKey"/> - no SaveableTypeDefiner, no custom types - so
     /// the mod can be added to or removed from a running campaign: without the mod the game simply ignores the
     /// orphaned entry, and a save without it starts with an empty store.
     /// </summary>
     internal sealed class GearBehavior : CampaignBehaviorBase
     {
-        public const string SaveKey = "MyTroopsGear_overrides_v1";
+        /// <summary>Per-set lines <c>troopId|set|slot|itemId</c> (since per-set editing).</summary>
+        public const string SaveKey = "MyTroopsGear_overrides_v2";
+
+        /// <summary>Older builds: <c>troopId|slot|itemId</c>, one edit for every set. Read on load only; the store keeps
+        /// those lines as all-sets edits until <see cref="OnSessionLaunched"/> expands them onto each set.</summary>
+        public const string OldSaveKey = "MyTroopsGear_overrides_v1";
 
         public static GearBehavior? Instance { get; private set; }
 
@@ -42,8 +47,12 @@ namespace MyTroopsGear
             dataStore.SyncData(SaveKey, ref _lines);
             if (dataStore.IsLoading)
             {
-                Store = OverrideStore.FromLines(_lines, out var skipped);
-                ModLog.Info("load", "read " + (_lines?.Count ?? 0) + " saved line(s) for " + Store.Count + " troop(s)"
+                var old = new List<string>();
+                dataStore.SyncData(OldSaveKey, ref old); // absent in new saves: stays empty
+                var all = (old ?? new List<string>()).Concat(_lines ?? new List<string>()).ToList();
+                Store = OverrideStore.FromLines(all, out var skipped);
+                ModLog.Info("load", "read " + all.Count + " saved line(s) (" + (old?.Count ?? 0) + " old all-sets): "
+                    + Store.Count + " troop(s) per set, " + Store.PendingAllSetsCount + " troop(s) to expand"
                     + (skipped > 0 ? ", skipped " + skipped + " malformed line(s)" : ""));
                 _lines = new List<string>();
             }
@@ -55,16 +64,21 @@ namespace MyTroopsGear
         {
             try
             {
-                var report = Store.Prune(TroopExists, ItemUsable);
+                var report = Store.Prune(TroopExists, ItemUsable, SetCountOf);
                 foreach (var line in report)
                     ModLog.Info("load", line);
-                // A weapon block / mount pair left on all-vanilla items (older builds kept them) is dropped, so
-                // the troop rolls its vanilla sets again there.
+                // Stored slots that equal their set's vanilla item change nothing (older builds kept unchanged
+                // blocks; expanded all-sets edits often match some set's own item): drop them per set.
                 foreach (var id in Store.TroopIds.ToList())
                 {
                     var troop = MBObjectManager.Instance.GetObject<CharacterObject>(id);
-                    if (troop != null && GearEditing.DropVanillaBlocks(Store, id, s => GearApplier.VanillaItemId(troop, s)))
-                        ModLog.Info("load", id + ": dropped an unchanged weapon/mount block");
+                    if (troop == null) continue;
+                    var vanillaOf = GearApplier.VanillaOf(troop);
+                    foreach (var set in Store.Get(id)?.SetIndices.ToList() ?? new List<int>())
+                    {
+                        if (GearEditing.DropUnchanged(Store, id, set, s => vanillaOf(set, s)))
+                            ModLog.Info("load", id + " set " + (set + 1) + ": dropped slots equal to vanilla");
+                    }
                 }
                 ModLog.Info("session", "campaign ready, " + Store.Count + " troop override(s)");
             }
@@ -78,6 +92,12 @@ namespace MyTroopsGear
         {
             var troop = MBObjectManager.Instance.GetObject<CharacterObject>(id);
             return troop != null && !troop.IsHero;
+        }
+
+        internal static int SetCountOf(string id)
+        {
+            var troop = MBObjectManager.Instance.GetObject<CharacterObject>(id);
+            return troop == null ? 0 : GearApplier.SetCount(troop);
         }
 
         internal static bool ItemUsable(string id)
