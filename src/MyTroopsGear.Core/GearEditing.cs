@@ -27,11 +27,85 @@ namespace MyTroopsGear.Core
             }
 
             store.Set(troopId, slot, VanillaOrEmpty(vanilla, slot), vanilla);
-            over = store.Get(troopId);
-            if (over != null && IsBlockVanilla(over, block, vanilla))
-                store.Revert(troopId, slot);
+            DropVanillaBlocks(store, troopId, vanilla);
             return true;
         }
+
+        /// <summary>
+        /// The picker's write: <paramref name="itemId"/> into <paramref name="slot"/>. If that puts the weapon block or
+        /// the mount pair back on exactly the vanilla items (the player picked the troop's own item again), the block is
+        /// dropped, so the troop rolls its vanilla sets again instead of being pinned to its first set.
+        /// </summary>
+        public static void SetSlot(OverrideStore store, string troopId, int slot, string itemId, Func<int, string?> vanilla)
+        {
+            store.Set(troopId, slot, itemId, vanilla);
+            DropVanillaBlocks(store, troopId, vanilla);
+        }
+
+        /// <summary>Drops every stored weapon block / mount pair whose slots all hold the vanilla (first set) item:
+        /// such a block changes nothing the player chose. Armour slots are kept - one is stored only when picked, and
+        /// picking the first set's helmet on purpose pins it on every set. Returns true if something was dropped.</summary>
+        public static bool DropVanillaBlocks(OverrideStore store, string troopId, Func<int, string?> vanilla)
+        {
+            bool dropped = false;
+            foreach (var block in new[] { GearSlots.WeaponBlock, GearSlots.MountPair })
+            {
+                var over = store.Get(troopId);
+                if (over == null || !over.IsOverridden(block[0]) || !IsBlockVanilla(over, block, vanilla))
+                    continue;
+                store.Revert(troopId, block[0]);
+                dropped = true;
+            }
+            return dropped;
+        }
+
+        /// <summary>
+        /// Whether the player really changed <paramref name="slot"/> - what the editor marks as edited (gold name, Reset,
+        /// the "N slots edited" count). An armour slot is edited whenever it is stored. A slot of the weapon block or
+        /// mount pair is stored together with its block mates (seeded from the first set), so it counts as edited only
+        /// when its item differs from the troop's vanilla first-set item (<paramref name="vanilla"/>; null = empty).
+        /// </summary>
+        public static bool IsSlotEdited(TroopOverride? over, int slot, Func<int, string?> vanilla)
+        {
+            if (over == null || !over.TryGet(slot, out var id))
+                return false;
+            if (GearSlots.BlockOf(slot).Count == 1)
+                return true;
+            return id != VanillaOrEmpty(vanilla, slot);
+        }
+
+        /// <summary>How many slots <see cref="IsSlotEdited"/> counts.</summary>
+        public static int EditedSlotCount(TroopOverride? over, Func<int, string?> vanilla)
+        {
+            int n = 0;
+            foreach (var s in GearSlots.All)
+                if (IsSlotEdited(over, s, vanilla))
+                    n++;
+            return n;
+        }
+
+        /// <summary>At least one slot is really edited (the unit page's "*" and its Vanilla | My version toggle).</summary>
+        public static bool HasEdits(TroopOverride? over, Func<int, string?> vanilla) => EditedSlotCount(over, vanilla) > 0;
+
+        /// <summary>
+        /// The grey text of a slot that is not edited. <paramref name="pinned"/>: the slot is stored with its block, so
+        /// every set now uses the first set's item. <paramref name="varies"/>: the troop's vanilla sets differ in this
+        /// slot, so the shown set's item is only one of the rolls.
+        /// </summary>
+        public static string VanillaText(string itemName, bool pinned, bool varies)
+        {
+            if (pinned && varies) return "vanilla (set 1): " + itemName;
+            if (varies) return "vanilla (varies): " + itemName;
+            return "vanilla: " + itemName;
+        }
+
+        /// <summary>"Tier 3 | 1,250" - an item's tier (1-6) and value in denars, for rows and picker cards.</summary>
+        public static string TierPriceText(int tier, int value) =>
+            "Tier " + tier + " | " + value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
+        /// <summary>The line under the set arrows: edits are an overlay on every vanilla set, not on the shown one.</summary>
+        public static string SetsText(int setCount) =>
+            setCount > 1 ? "Your edits apply to all " + setCount + " sets" : "This troop has one vanilla set";
 
         /// <summary>The troop goes fully vanilla. False if it had no override.</summary>
         public static bool ResetTroop(OverrideStore store, string troopId) => store.Clear(troopId);
