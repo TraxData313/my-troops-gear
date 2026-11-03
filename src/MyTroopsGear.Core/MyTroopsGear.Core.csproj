@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pure logic: no game references. The override model and its save lines, unit-tested in
+       tests\MyTroopsGear.Core.Tests; the module feeds it game ids. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>MyTroopsGear.Core</RootNamespace>
+    <AssemblyName>MyTroopsGear.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MyTroopsGear.Core.Tests" />
+  </ItemGroup>
+
+</Project>
