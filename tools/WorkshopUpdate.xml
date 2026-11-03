@@ -1,0 +1,20 @@
+<Tasks>
+    <GetItem>
+        <!-- Updating the existing Workshop item. ITEM_ID: replace with the ID WorkshopCreate.xml printed on the
+             first upload (make_workshop_update.py refuses until then).
+             Not run directly: tools\make_workshop_update.py builds a task from it (adds ModuleFolder,
+             the description, change notes, visibility). See tools\WORKSHOP-UPLOAD.md. -->
+        <ItemId Value="ITEM_ID"/>
+    </GetItem>
+    <UpdateItem>
+        <ModuleFolder Value="DIST_FOLDER"/>
+        <ChangeNotes Value="vX.Y.Z - what changed." />
+        <Tags>
+            <Tag Value="Utility" />
+            <Tag Value="UI" />
+            <Tag Value="Native" />
+            <Tag Value="Singleplayer" />
+            <Tag Value="v1.4.8" />
+        </Tags>
+    </UpdateItem>
+</Tasks>

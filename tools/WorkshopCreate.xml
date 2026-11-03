@@ -1,0 +1,20 @@
+<Tasks>
+    <CreateItem/>
+    <UpdateItem>
+        <!-- First Steam Workshop upload: it CREATES the item. Run it ONCE (tools\WORKSHOP-UPLOAD.md), then put the
+             new item ID into WorkshopUpdate.xml and never run this file again. <Tasks> must be the file's
+             first node; comments only inside UpdateItem. Title comes from SubModule.xml <Name>.
+             The short description here is replaced by tools\STEAM-DESCRIPTION.bbcode on the first update. -->
+        <ModuleFolder Value="C:\Users\Asus ROG\Documents\BannerlordMods\my-troops-gear\dist\MyTroopsGear"/>
+        <ItemDescription Value="Change the gear of your own troops, slot by slot, from the Encyclopedia. Only your party, your clan's parties and your garrisons wear it; everyone else keeps vanilla. Free, instant, save-safe. Requires Harmony and UIExtenderEx."/>
+        <Tags>
+            <Tag Value="Utility" />
+            <Tag Value="UI" />
+            <Tag Value="Native" />
+            <Tag Value="Singleplayer" />
+            <Tag Value="v1.4.8" />
+        </Tags>
+        <Image Value="C:\Users\Asus ROG\Documents\BannerlordMods\my-troops-gear\docs\thumbnail.jpg"/>
+        <Visibility Value="Public"/>
+    </UpdateItem>
+</Tasks>

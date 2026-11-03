@@ -15,3 +15,7 @@ steam_workshop_uploader.txt
 
 # Manager-mode progress notes
 /.manager/
+
+# Thumbnail build intermediates (the screenshots themselves live in docs/screenshots and are committed)
+/screenshots/
+/tools/build/
