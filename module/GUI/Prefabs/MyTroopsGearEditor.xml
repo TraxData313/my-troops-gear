@@ -1,7 +1,8 @@
 <!--
   My Troops' Gear: the gear editor of one troop. Loaded by UI\GearEditorWindow via
   GauntletLayer.LoadMovie("MyTroopsGearEditor", GearEditorVM) on layer order 320, over the Encyclopedia.
-  Our own layout (left: tableau + set arrows + reset whole unit; middle: one row per slot with Change / Reset;
+  Our own layout (left: tableau + set arrows (= the set being edited) + reset this set / whole unit; middle: one row
+  per slot of the edited set with Change / Reset / All sets;
   right: the item picker). Only vanilla widget classes and brushes / sprites of always-loaded categories
   (tools\check-gui.ps1 checks every tag, attribute, brush, sprite and binding against the game and the built DLL).
 -->
@@ -30,15 +31,15 @@
               <Children>
                 <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#FFFFFFFF" AlphaFactor="0.03" />
 
-                <!-- The tableau: the troop in the current vanilla set with our edits on top (a clone; the troop is untouched) -->
-                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="540" VerticalAlignment="Top" ClipContents="true" IsEnabled="false">
+                <!-- The tableau: the troop in the edited set with that set's edits on top (a clone; the troop is untouched) -->
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="500" VerticalAlignment="Top" ClipContents="true" IsEnabled="false">
                   <Children>
                     <CharacterTableauWidget DataSource="{Character}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" BodyProperties="@BodyProperties" IsFemale="@IsFemale" EquipmentCode="@EquipmentCode" CharStringId="@CharStringId" StanceIndex="@StanceIndex" BannerCodeText="@BannerCodeText" MountCreationKey="@MountCreationKey" IsEnabled="false" ArmorColor1="@ArmorColor1" ArmorColor2="@ArmorColor2" Race="@Race" />
                   </Children>
                 </Widget>
 
-                <!-- Vanilla set arrows: untouched slots show how they roll -->
-                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="548" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                <!-- Set arrows: they pick the set the rows show and edit -->
+                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="508" StackLayout.LayoutMethod="HorizontalLeftToRight">
                   <Children>
                     <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="44" SuggestedHeight="36" VerticalAlignment="Center" Brush="ButtonSimpleBrush" Command.Click="ExecutePreviousSet" IsEnabled="@HasManySets" UpdateChildrenStates="true">
                       <Children>
@@ -54,10 +55,27 @@
                   </Children>
                 </ListPanel>
 
-                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" VerticalAlignment="Top" MarginTop="594" Brush="Popup.Description.Text" Brush.FontSize="17" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#F2D58CFF" Text="@EditedSummaryText" />
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="26" VerticalAlignment="Top" MarginTop="552" Brush="Popup.Description.Text" Brush.FontSize="17" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#F2D58CFF" Text="@EditedSummaryText" />
 
-                <!-- Reset the whole unit: big and plain, under the tableau. Two clicks (the text asks for the second). -->
-                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="380" SuggestedHeight="56" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="626">
+                <!-- Reset only the set shown: one click, small -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="300" SuggestedHeight="42" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="586">
+                  <Children>
+                    <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ButtonSimpleBrush" Command.Click="ExecuteResetSet" IsEnabled="@CanResetSet" UpdateChildrenStates="true">
+                      <Children>
+                        <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                          <Children>
+                            <BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="20" SuggestedHeight="20" VerticalAlignment="Center" MarginRight="8" Brush="RefreshButton.Flat" DoNotAcceptEvents="true" />
+                            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="18" Text="@ResetSetText" />
+                          </Children>
+                        </ListPanel>
+                      </Children>
+                    </ButtonWidget>
+                    <HintWidget DataSource="{ResetSetHint}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint" IsDisabled="true" />
+                  </Children>
+                </Widget>
+
+                <!-- Reset the whole unit (every set): big and plain. Two clicks (the text asks for the second). -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="380" SuggestedHeight="56" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="638">
                   <Children>
                     <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Cancel.Button" Command.Click="ExecuteResetAll" IsEnabled="@CanResetAll" UpdateChildrenStates="true">
                       <Children>
@@ -74,12 +92,12 @@
                 </Widget>
 
                 <!-- Horse vs formation note -->
-                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Top" MarginTop="694" MarginLeft="14" MarginRight="14" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#E8A15AFF" Text="@WarningText" IsVisible="@HasWarning" />
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Top" MarginTop="702" MarginLeft="14" MarginRight="14" Brush="Popup.Description.Text" Brush.FontSize="16" Brush.TextHorizontalAlignment="Center" Brush.FontColor="#E8A15AFF" Text="@WarningText" IsVisible="@HasWarning" />
               </Children>
             </Widget>
 
             <!-- ===================== Middle: the slots ===================== -->
-            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="620" HorizontalAlignment="Left" MarginLeft="470" MarginTop="100" MarginBottom="90">
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="650" HorizontalAlignment="Left" MarginLeft="470" MarginTop="100" MarginBottom="90">
               <Children>
                 <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" VerticalAlignment="Top" MarginLeft="8" Brush="Popup.Description.Text" Brush.FontSize="22" Brush.TextHorizontalAlignment="Left" Brush.FontColor="#E4C59BFF" Text="@SlotsHeaderText" />
                 <ListPanel DataSource="{Slots}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Top" MarginTop="40" StackLayout.LayoutMethod="VerticalTopToBottom">
@@ -92,13 +110,13 @@
                         <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginBottom="2" StackLayout.LayoutMethod="HorizontalLeftToRight">
                           <Children>
                             <!-- item picture (hover: the vanilla item tooltip) -->
-                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="52" VerticalAlignment="Center" MarginLeft="12" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint">
+                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="96" SuggestedHeight="48" VerticalAlignment="Center" MarginLeft="12" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint">
                               <Children>
                                 <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.35" DoNotAcceptEvents="true" />
                                 <ImageIdentifierWidget DataSource="{Visual}" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" AdditionalArgs="@AdditionalArgs" ImageId="@Id" TextureProviderName="@TextureProviderName" />
                               </Children>
                             </Widget>
-                            <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="268" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="12" StackLayout.LayoutMethod="VerticalTopToBottom">
+                            <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="232" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="10" StackLayout.LayoutMethod="VerticalTopToBottom">
                               <Children>
                                 <!-- slot label, and the shown item's tier and value on the right -->
                                 <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22">
@@ -116,13 +134,13 @@
                               </Children>
                             </ListPanel>
                             <!-- Change -->
-                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="6" Brush="ButtonSimpleBrush" Command.Click="ExecuteChange" UpdateChildrenStates="true">
+                            <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="92" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="6" Brush="ButtonSimpleBrush" Command.Click="ExecuteChange" UpdateChildrenStates="true">
                               <Children>
                                 <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="17" Text="@ChangeText" />
                               </Children>
                             </ButtonWidget>
-                            <!-- Reset this slot: shown only while the slot is yours; "vanilla" in its place otherwise -->
-                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="104" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="8">
+                            <!-- Reset this slot of this set: shown only while the slot is yours; "vanilla" in its place otherwise -->
+                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="92" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="6">
                               <Children>
                                 <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ButtonSimpleBrush" Command.Click="ExecuteReset" IsVisible="@IsOverridden" UpdateChildrenStates="true">
                                   <Children>
@@ -138,6 +156,17 @@
                                 <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@VanillaTagText" IsHidden="@IsOverridden" />
                               </Children>
                             </Widget>
+                            <!-- All sets: this row's item onto this slot of every set (only for troops with several sets) -->
+                            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="92" SuggestedHeight="38" VerticalAlignment="Center" MarginLeft="6" IsVisible="@IsAllSetsVisible">
+                              <Children>
+                                <ButtonWidget DoNotPassEventsToChildren="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ButtonSimpleBrush" Command.Click="ExecuteApplyAllSets" IsEnabled="@CanApplyAllSets" UpdateChildrenStates="true">
+                                  <Children>
+                                    <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Popup.Button.Text" Brush.FontSize="16" Text="@AllSetsText" />
+                                  </Children>
+                                </ButtonWidget>
+                                <HintWidget DataSource="{AllSetsHint}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Command.HoverBegin="ExecuteBeginHint" Command.HoverEnd="ExecuteEndHint" IsDisabled="true" />
+                              </Children>
+                            </Widget>
                           </Children>
                         </ListPanel>
                       </Children>
@@ -148,7 +177,7 @@
             </Widget>
 
             <!-- ===================== Right: the item picker ===================== -->
-            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="1110" MarginRight="30" MarginTop="100" MarginBottom="90">
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="1140" MarginRight="30" MarginTop="100" MarginBottom="90">
               <Children>
                 <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#FFFFFFFF" AlphaFactor="0.03" />
 
@@ -244,7 +273,7 @@
                           <Children>
                             <Widget Id="PickerClip" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
                               <Children>
-                                <GridWidget Id="PickerGrid" DataSource="{Cards}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" DefaultCellWidth="180" DefaultCellHeight="164" ColumnCount="3">
+                                <GridWidget Id="PickerGrid" DataSource="{Cards}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" DefaultCellWidth="176" DefaultCellHeight="164" ColumnCount="3">
                                   <ItemTemplate>
                                     <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="4" MarginRight="4" MarginTop="4" MarginBottom="4">
                                       <Children>
@@ -259,9 +288,11 @@
                                               </Children>
                                             </Widget>
                                             <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="44" VerticalAlignment="Top" MarginTop="86" MarginLeft="6" MarginRight="6" Brush="Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Top" Brush.FontColor="#F4E9D6FF" Text="@NameText" IsHidden="@IsEmptyChoice" DoNotAcceptEvents="true" />
-                                            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="20" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="6" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
+                                            <!-- tier | value: light text on a dark strip (it was grey on the grey button, barely readable) -->
+                                            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="24" VerticalAlignment="Bottom" MarginBottom="4" MarginLeft="6" MarginRight="6" Sprite="BlankWhiteSquare_9" Color="#000000FF" AlphaFactor="0.55" DoNotAcceptEvents="true" />
+                                            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="Fixed" SuggestedHeight="24" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="4" StackLayout.LayoutMethod="HorizontalLeftToRight" DoNotAcceptEvents="true">
                                               <Children>
-                                                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="13" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#9C968CFF" Text="@DetailText" DoNotAcceptEvents="true" />
+                                                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" Brush="Popup.Description.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Brush.TextVerticalAlignment="Center" Brush.FontColor="#F4E9D6FF" Text="@DetailText" DoNotAcceptEvents="true" />
                                                 <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="14" SuggestedHeight="14" VerticalAlignment="Center" MarginLeft="4" Sprite="General\Icons\Coin@2x" IsVisible="@HasPrice" DoNotAcceptEvents="true" />
                                               </Children>
                                             </ListPanel>
