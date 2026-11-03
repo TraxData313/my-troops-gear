@@ -95,6 +95,7 @@ namespace MyTroopsGear
         {
             UI.GearEditorWindow.Close();
             UI.EncyclopediaUnitPageMixin.ResetSession();
+            UI.ItemCatalog.Reset();
             base.OnGameEnd(game);
         }
 

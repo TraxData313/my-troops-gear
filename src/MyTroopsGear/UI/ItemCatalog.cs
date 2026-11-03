@@ -20,6 +20,17 @@ namespace MyTroopsGear.UI
         private static readonly Dictionary<string, string> CultureNames = new Dictionary<string, string>(StringComparer.Ordinal);
         private static HashSet<string>? _troopItems;
 
+        /// <summary>Forget everything (game end): the lists hold the old campaign's ItemObjects and _campaign the Campaign
+        /// itself, which would otherwise stay alive until the editor is next opened.</summary>
+        public static void Reset()
+        {
+            ByKind.Clear();
+            Items.Clear();
+            CultureNames.Clear();
+            _troopItems = null;
+            _campaign = null;
+        }
+
         public static ItemObject? Item(string id) => Items.TryGetValue(id, out var item) ? item : null;
 
         public static string CultureName(string? id) =>
@@ -30,10 +41,7 @@ namespace MyTroopsGear.UI
         {
             if (_campaign != Campaign.Current)
             {
-                ByKind.Clear();
-                Items.Clear();
-                CultureNames.Clear();
-                _troopItems = null;
+                Reset();
                 _campaign = Campaign.Current;
             }
             var kind = GearSlots.IsWeapon(slot) ? "weapon" : GearSlots.Name(slot);
