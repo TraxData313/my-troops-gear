@@ -9,10 +9,12 @@ replacement for My Little Warband (no custom troop tree; copy none of MLW's code
 
 - `src\MyTroopsGear.Core` - netstandard2.0, no game references: the override model (`GearSlots`,
   `TroopOverride`, `OverrideStore`) and its save lines; the editor's pure logic (`GearEditing`: per-slot
-  revert with the block rules; `ItemCandidates`: picker filters). Unit-tested.
+  revert with the block rules; `ItemCandidates`: picker filters; `UnitPageView`: the unit page's
+  Vanilla | My version rules). Unit-tested.
 - `src\MyTroopsGear` - net472 module: `SubModule`, `GearBehavior` (save), `GearScope` (whose parties),
   `SpawnPatch` (Harmony prefix on `Mission.SpawnAgent`), `GearApplier`, `GearCommands` (console), `ModLog`.
-  `UI\`: `EncyclopediaUnitPageButtons` (mixin + prefab insert: "Edit gear" on the unit page), `GearEditorWindow`
+  `UI\`: `EncyclopediaUnitPageButtons` (mixin + prefab insert on the unit page: "Vanilla | My version" toggle, shown
+  only for edited troops, rebuilds the set selector from override-applied clones; session-static choice; and "Edit gear"), `GearEditorWindow`
   (layer 320, above the Encyclopedia's 310; Esc closes), `GearEditorVM` + `GearEditorParts`, `ItemCatalog`,
   `EncyclopediaBackGuard` (holds the Encyclopedia's Backspace-back while the editor is open).
 - `tests\MyTroopsGear.Core.Tests` - xunit, net8.0.
@@ -24,7 +26,7 @@ replacement for My Little Warband (no custom troop tree; copy none of MLW's code
 ```
 dotnet build src\MyTroopsGear -c Release
 dotnet test tests\MyTroopsGear.Core.Tests -c Release
-powershell -ExecutionPolicy Bypass -File tools\check-gui.ps1  # after a build: prefab vs game widgets/brushes/sprites/bindings
+powershell -ExecutionPolicy Bypass -File tools\check-gui.ps1  # after a build: prefabs + prefab extensions vs game widgets/brushes/sprites/bindings
 powershell -ExecutionPolicy Bypass -File tools\deploy.ps1     # builds + installs Modules\MyTroopsGear.Dev, "(dev)"
 ```
 
