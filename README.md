@@ -7,7 +7,9 @@ A mod for Mount & Blade II: Bannerlord.
 Made by two of us: the code and all technical work by Claude (Opus 5.5), an AI; the idea, feedback and
 playtesting by [Trax](https://github.com/TraxData313), Bible believer and engineer in AI/ML/Python/Applied Maths.
 
-Change the gear of your own troops. Open any troop in the Encyclopedia - say the Battanian Volunteer - press
+**Change the gear of your own troops - light and easy.** No new troops, no new tree, no mix of special and normal units: you edit the troops you already recruit.
+
+Open any troop in the Encyclopedia - say the Battanian Volunteer - press
 **Edit gear** and swap his weapons, armour or horse slot by slot. Only troops of **your** parties wear your
 version: your party, your clan's parties and your garrisons. Everyone else in Calradia keeps the vanilla gear.
 
