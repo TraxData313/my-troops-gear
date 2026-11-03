@@ -20,8 +20,7 @@ namespace MyTroopsGear
             base.OnSubModuleLoad();
             try
             {
-                // No mixins/prefab extensions yet (the editor and Encyclopedia toggle come later); registered now
-                // so they only need adding.
+                // The Encyclopedia unit page's "Edit gear" button (UI\EncyclopediaUnitPageButtons.cs).
                 _uiExtender = UIExtender.Create("MyTroopsGear");
                 _uiExtender.Register(typeof(SubModule).Assembly);
                 _uiExtender.Enable();
@@ -50,6 +49,14 @@ namespace MyTroopsGear
             }
             try
             {
+                UI.EncyclopediaBackGuard.Apply(new Harmony(HarmonyId));
+            }
+            catch (Exception e)
+            {
+                ModLog.Error("load", "patching the Encyclopedia's Back/Forward failed (Backspace in the editor may page it back)", e);
+            }
+            try
+            {
                 SpawnPatch.Apply(new Harmony(HarmonyId));
                 ModLog.Info("load", "spawn patch applied");
             }
@@ -58,6 +65,18 @@ namespace MyTroopsGear
                 ModLog.Error("load", "patching Mission.SpawnAgent failed", e);
                 Warn("patching troop spawns failed, troops fight in vanilla gear (see the mod log)");
             }
+        }
+
+        protected override void OnApplicationTick(float dt)
+        {
+            base.OnApplicationTick(dt);
+            UI.GearEditorWindow.Tick(dt); // cheap while the editor is closed
+        }
+
+        public override void OnGameEnd(Game game)
+        {
+            UI.GearEditorWindow.Close();
+            base.OnGameEnd(game);
         }
 
         internal static void Warn(string message)
