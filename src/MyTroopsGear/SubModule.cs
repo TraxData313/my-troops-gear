@@ -76,6 +76,7 @@ namespace MyTroopsGear
         public override void OnGameEnd(Game game)
         {
             UI.GearEditorWindow.Close();
+            UI.EncyclopediaUnitPageMixin.ResetSession();
             base.OnGameEnd(game);
         }
 
